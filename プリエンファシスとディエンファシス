@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import freqz
+
+# Function to calculate the frequency response for Pre-Emphasis
+def pre_emphasis_response(tau0, tau1, sample_rate):
+    w = np.linspace(0, 2 * np.pi * (sample_rate / 2), 512)  # Angular frequency
+    H_pre = np.sqrt(1 + (w * tau0)**2) / np.sqrt(1 + (w * tau1)**2)
+    return H_pre
+
+# Function to calculate the frequency response for De-Emphasis
+def de_emphasis_response(tau0, tau1, sample_rate):
+    w = np.linspace(0, 2 * np.pi * (sample_rate / 2), 512)  # Angular frequency
+    H_de = np.sqrt(1 + (w * tau1)**2) / np.sqrt(1 + (w * tau0)**2)
+    return H_de
+
+# Parameters
+tau0 = 50e-6  # Pre-emphasis time constant (50μS)
+tau1 = 15e-6  # De-emphasis time constant (15μS)
+sample_rate = 44100  # Sampling frequency in Hz
+
+# Calculate frequency responses
+pre_emphasis_gain = pre_emphasis_response(tau0, tau1, sample_rate)
+de_emphasis_gain = de_emphasis_response(tau0, tau1, sample_rate)
+
+# Frequency axis for plotting
+frequencies = np.linspace(0, sample_rate / 2, len(pre_emphasis_gain))
+
+# Gain in dB
+pre_emphasis_gain_db = 20 * np.log10(pre_emphasis_gain)
+de_emphasis_gain_db = 20 * np.log10(de_emphasis_gain)
+
+# Plotting Bode Diagrams
+plt.figure(figsize=(12, 10))
+
+# Pre-Emphasis Gain
+plt.subplot(2, 1, 1)
+plt.plot(frequencies, pre_emphasis_gain_db, label='Pre-Emphasis Gain [dB]', color='blue')
+plt.title('Pre-Emphasis Gain Characteristics')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Gain [dB]')
+plt.xscale('log')  # Logarithmic scale for frequency
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+plt.grid()
+plt.legend()
+
+# De-Emphasis Gain
+plt.subplot(2, 1, 2)
+plt.plot(frequencies, de_emphasis_gain_db, label='De-Emphasis Gain [dB]', color='red')
+plt.title('De-Emphasis Gain Characteristics')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Gain [dB]')
+plt.xscale('log')  # Logarithmic scale for frequency
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
