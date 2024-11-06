@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def simulate_reverberation(input_signal, delay_lengths, gains):
+    # Initialize output signal with zeros
+    output_signal = np.zeros_like(input_signal)
+    
+    # Apply reverb effect
+    for i, delay_length in enumerate(delay_lengths):
+        # Create delayed version of the input signal
+        delayed_signal = np.zeros_like(input_signal)
+        delayed_signal[delay_length:] = input_signal[:-delay_length]
+        
+        # Apply gain to the delayed signal
+        delayed_signal *= gains[i]
+        
+        # Add the delayed and attenuated signal to the output
+        output_signal += delayed_signal
+    
+    return output_signal
+
+# Parameters
+fs = 44100  # Sampling frequency
+duration = 5  # Duration of the signal in seconds
+
+# Create an impulse input signal
+input_signal = np.zeros(int(fs * duration))
+input_signal[0] = 1.0  # Impulse at the beginning
+
+# Define delay lengths and gains for reverb simulation
+delay_lengths = [int(fs * 0.1), int(fs * 0.2), int(fs * 0.3)]  # Delay lengths in samples (e.g., 0.1s, 0.2s, 0.3s)
+gains = [0.8, 0.6, 0.4]  # Gains for each delayed signal
+
+# Simulate reverberation effect
+output_signal = simulate_reverberation(input_signal, delay_lengths, gains)
+
+# Plotting input and output signals
+t = np.linspace(0, duration, len(input_signal))
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(2, 1, 1)
+plt.plot(t, input_signal, label='Input Signal (Impulse)')
+plt.title('Impulse Input Signal')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(t, output_signal, label='Output Signal (Reverberation)')
+plt.title('Output Signal with Reverberation Effect')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+
