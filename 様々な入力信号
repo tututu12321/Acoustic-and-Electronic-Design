@@ -1,0 +1,89 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a square wave
+def square_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * (1 + np.sign(np.sin(2 * np.pi * freq * t)))  # Create square wave
+    return t, wave
+
+# Function to create a pulse wave
+def pulse_wave(freq, duty_cycle, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * (1 + np.sign(np.sin(2 * np.pi * freq * t) * (t % (1/freq) < duty_cycle / (100 * freq))))  # Create pulse wave
+    return t, wave
+
+# Function to create a triangle wave
+def triangle_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 2 * np.abs((t * freq) % 1 - 0.5)  # Create triangle wave
+    return t, wave
+
+# Function to create noise
+def noise_wave(duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = np.random.uniform(-1, 1, size=t.shape)  # Create white noise
+    return t, wave
+
+# Parameters
+freq = 1  # Frequency of the waves (Hz)
+duration = 2.0  # Duration in seconds
+sample_rate = 1000  # Sample rate in Hz
+
+# Generate waveforms
+t_square, square = square_wave(freq, duration, sample_rate)
+t_25_pulse, pulse_25 = pulse_wave(freq, 25, duration, sample_rate)  # 25% duty cycle
+t_12_5_pulse, pulse_12_5 = pulse_wave(freq, 12.5, duration, sample_rate)  # 12.5% duty cycle
+t_triangle, triangle = triangle_wave(freq, duration, sample_rate)
+t_noise, noise = noise_wave(duration, sample_rate)
+
+# Plotting the results
+plt.figure(figsize=(15, 12))
+
+# Square Wave
+plt.subplot(5, 1, 1)
+plt.plot(t_square, square, label='Square Wave', color='blue')
+plt.title('Square Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# 25% Pulse Wave
+plt.subplot(5, 1, 2)
+plt.plot(t_25_pulse, pulse_25, label='25% Pulse Wave', color='orange')
+plt.title('25% Pulse Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# 12.5% Pulse Wave
+plt.subplot(5, 1, 3)
+plt.plot(t_12_5_pulse, pulse_12_5, label='12.5% Pulse Wave', color='green')
+plt.title('12.5% Pulse Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Triangle Wave
+plt.subplot(5, 1, 4)
+plt.plot(t_triangle, triangle, label='Triangle Wave', color='purple')
+plt.title('Triangle Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Noise Wave
+plt.subplot(5, 1, 5)
+plt.plot(t_noise, noise, label='Noise Wave', color='red')
+plt.title('Noise Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
