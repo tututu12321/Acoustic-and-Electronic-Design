@@ -1,0 +1,49 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import lti, step
+
+# Gain of the amplifier
+K = 2.0  # Set the gain
+
+# Time constant of the first-order lag system
+tau = 1.0  # Set the time constant
+
+# Transfer function of the amplifier A(s) = K
+numerator_A = [K]  # Numerator
+denominator_A = [1]  # Denominator
+
+# Transfer function of the first-order lag system H(s) = 1 / (τs + 1)
+numerator_H = [1]  # Numerator
+denominator_H = [tau, 1]  # Denominator
+
+# Overall transfer function G(s) = A(s) * H(s)
+combined_numerator = np.convolve(numerator_A, numerator_H)
+combined_denominator = np.convolve(denominator_A, denominator_H)
+
+# Define feedback transfer function H_feedback(s) = 1 (unity feedback)
+numerator_H_feedback = [1]  # Feedback numerator
+denominator_H_feedback = [1]  # Feedback denominator
+
+# Calculate the overall feedback system's transfer function
+# G(s) / (1 + G(s) * H_feedback(s))
+feedback_numerator = combined_numerator
+feedback_denominator = np.convolve(combined_denominator, denominator_H_feedback)
+
+# Setting the time axis
+t = np.linspace(0, 10, 500)
+
+# Calculate the step response for the feedback system
+t_feedback, response_feedback = step(lti(feedback_numerator, feedback_denominator), T=t)
+
+# Plotting the response
+plt.figure(figsize=(8, 4))
+plt.plot(t_feedback, response_feedback, label='Feedback System Response', color='orange')
+plt.title('Response of Amplifier with Feedback')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.axhline(0, color='gray', lw=0.5, ls='--')
+plt.axvline(0, color='gray', lw=0.5, ls='--')
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
