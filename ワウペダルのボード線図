@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import TransferFunction, bode
+
+# Parameters for the wah pedal (bandpass filter)
+omega_0 = 1000  # Center frequency in rad/s (example: 1000 Hz)
+Q = 10          # Quality factor
+
+# Create the transfer function for the bandpass filter
+numerator = [omega_0 / Q, 0]  # s(ω₀/Q)
+denominator = [1, omega_0, omega_0**2]  # s² + (ω₀/Q)s + ω₀²
+system = TransferFunction(numerator, denominator)
+
+# Generate frequency range for Bode plot
+frequencies = np.logspace(1, 4, 1000)  # From 10 Hz to 10 kHz
+omega = 2 * np.pi * frequencies  # Convert to rad/s
+
+# Calculate Bode plot
+w, mag, phase = bode(system, omega)
+
+# Plot the magnitude and phase
+plt.figure(figsize=(12, 8))
+
+# Magnitude plot
+plt.subplot(2, 1, 1)
+plt.semilogx(frequencies, mag)  # Magnitude in dB
+plt.title('Bode Plot of Wah Pedal (Bandpass Filter)')
+plt.ylabel('Magnitude [dB]')
+plt.grid()
+
+# Phase plot
+plt.subplot(2, 1, 2)
+plt.semilogx(frequencies, phase)  # Phase in degrees
+plt.ylabel('Phase [degrees]')
+plt.xlabel('Frequency [Hz]')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
