@@ -1,3 +1,4 @@
+```python
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,3 +56,4 @@ axs[1].grid()
 
 plt.tight_layout()
 plt.show()
+```
