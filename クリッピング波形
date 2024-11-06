@@ -1,0 +1,104 @@
+
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function to apply gain
+def apply_gain(wave, gain):
+    return wave * gain
+
+# Function to apply clipping
+def apply_clipping(wave):
+    return np.clip(wave, -0.5, 0.5)  # Clipping the wave to the range [-0.5, 0.5]
+
+# Parameters
+frequency = 440  # Frequency in Hz (A4)
+duration = 0.01  # Duration in seconds
+sample_rate = 44100  # Sample rate in Hz
+
+# Create sine wave
+t, sine_wave = create_sine_wave(frequency, duration, sample_rate)
+
+# Apply gain
+gain = 3  # Increased gain to show clipping effect
+amplified_wave = apply_gain(sine_wave, gain)
+
+# Apply clipping
+clipped_wave = apply_clipping(amplified_wave)
+
+# FFT calculation
+def compute_fft(wave, sample_rate):
+    n = len(wave)
+    fft_result = np.fft.fft(wave)
+    freq = np.fft.fftfreq(n, 1/sample_rate)
+    return freq[:n // 2], np.abs(fft_result)[:n // 2]  # Return positive frequencies
+
+# Compute FFT for each wave
+freq_input, fft_input = compute_fft(sine_wave, sample_rate)
+freq_amplified, fft_amplified = compute_fft(amplified_wave, sample_rate)
+freq_clipped, fft_clipped = compute_fft(clipped_wave, sample_rate)
+
+# Plotting
+plt.figure(figsize=(12, 10))
+
+# Input Waveform
+plt.subplot(3, 2, 1)
+plt.plot(t, sine_wave, label='Input', color='blue')
+plt.title('Input Waveform')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Amplified Waveform
+plt.subplot(3, 2, 2)
+plt.plot(t, amplified_wave, label='Amplified', color='orange')
+plt.title('Amplified Waveform (Before Clipping)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Clipped Waveform
+plt.subplot(3, 2, 3)
+plt.plot(t, clipped_wave, label='Clipped', color='red')
+plt.title('Clipped Waveform')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# FFT of Input
+plt.subplot(3, 2, 4)
+plt.stem(freq_input, fft_input, linefmt='blue', markerfmt='bo', basefmt=' ')
+plt.title('FFT of Input Waveform')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Magnitude')
+plt.grid()
+
+# FFT of Amplified
+plt.subplot(3, 2, 5)
+plt.stem(freq_amplified, fft_amplified, linefmt='orange', markerfmt='ro', basefmt=' ')
+plt.title('FFT of Amplified Waveform')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Magnitude')
+plt.grid()
+
+# FFT of Clipped
+plt.subplot(3, 2, 6)
+plt.stem(freq_clipped, fft_clipped, linefmt='red', markerfmt='ro', basefmt=' ')
+plt.title('FFT of Clipped Waveform')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Magnitude')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
