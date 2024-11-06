@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a scale
+def create_scale(root, scale_type):
+    # Note names and their corresponding semitone values
+    notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    scale_pattern = {
+        'major': [2, 2, 1, 2, 2, 2, 1],  # W-W-H-W-W-W-H
+        'minor': [2, 1, 2, 2, 1, 2, 2],  # W-H-W-W-H-W-W
+    }
+
+    # Calculate scale
+    start_index = notes.index(root)
+    scale = [root]
+
+    for step in scale_pattern[scale_type]:
+        start_index = (start_index + step) % len(notes)
+        scale.append(notes[start_index])
+    
+    return scale
+
+# Function to visualize a chord
+def visualize_chord(chord, title):
+    # Set up a figure
+    plt.figure(figsize=(8, 4))
+    
+    # Create a scatter plot for the notes in the chord
+    plt.scatter(chord, [1] * len(chord), s=500, color='blue', alpha=0.6)
+    plt.title(title)
+    plt.xlim(-1, 12)
+    plt.xticks(rotation=45)
+    plt.xlabel('Notes')
+    plt.yticks([])
+    plt.grid(axis='y', linestyle='--')
+    
+    # Show chord visualization
+    plt.show()
+
+# Create and print scales
+major_scale = create_scale('C', 'major')
+minor_scale = create_scale('A', 'minor')
+
+print("C Major Scale:", major_scale)
+print("A Minor Scale:", minor_scale)
+
+# Define chords
+major_chord = ['C', 'E', 'G']
+minor_chord = ['A', 'C', 'E']
+
+# Visualize chords
+visualize_chord(major_chord, 'C Major Chord')
+visualize_chord(minor_chord, 'A Minor Chord')
