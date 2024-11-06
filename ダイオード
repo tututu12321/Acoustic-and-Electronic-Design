@@ -1,3 +1,4 @@
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -26,3 +27,4 @@ plt.grid()
 plt.xlim(-0.8, 0.8)
 plt.ylim(1e-14, 1e2)  # Limit y-axis to focus on diode behavior
 plt.show()
+```
