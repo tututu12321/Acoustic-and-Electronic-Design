@@ -1,0 +1,45 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import freqz
+
+# Parameters
+sample_rate = 44100  # Sample rate in Hz
+center_freq = 1000  # Center frequency (Hz)
+Q = 1.0  # Quality factor
+gain = 1.0  # Gain (linear)
+
+# Convert center frequency to radians
+omega_0 = 2 * np.pi * center_freq
+
+# Frequency response calculation for the bandpass filter
+def bandpass_response(omega_0, Q, gain, num_points=512):
+    w = np.linspace(0, np.pi, num_points)
+    H = gain * (1j * w / omega_0) / (1 + (1j * w / omega_0) / Q + (w / omega_0)**2)  # Transfer function
+    return w, H
+
+# Calculate frequency response
+w, H = bandpass_response(omega_0, Q, gain)
+
+# Plotting the frequency response
+plt.figure(figsize=(10, 6))
+
+# Magnitude plot
+plt.subplot(2, 1, 1)
+plt.plot(w * (sample_rate / (2 * np.pi)), 20 * np.log10(np.abs(H)), color='blue')
+plt.title('Bandpass Filter Frequency Response')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Magnitude [dB]')
+plt.xscale('log')
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+plt.grid()
+
+# Phase plot
+plt.subplot(2, 1, 2)
+plt.plot(w * (sample_rate / (2 * np.pi)), np.angle(H, deg=True), color='red')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Phase [degrees]')
+plt.xscale('log')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
