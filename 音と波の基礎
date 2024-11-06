@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+frequency = 440  # Frequency of the sine wave (A4 note) in Hz
+duration = 1.0   # Duration of the sound in seconds
+sample_rate = 44100  # Sampling rate in Hz
+P0 = 20e-6  # Reference sound pressure in Pascals (20 µPa)
+
+# Generate time axis
+t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+
+# Generate the sine wave signal
+amplitude = 0.5  # Amplitude of the wave
+signal = amplitude * np.sin(2 * np.pi * frequency * t)  # Sine wave at 440 Hz
+
+# Calculate wavelength (λ = v/f)
+speed_of_sound = 343  # Speed of sound in air in m/s
+wavelength = speed_of_sound / frequency  # Wavelength in meters
+
+# Calculate sound pressure level (SPL)
+P = amplitude * (P0 * np.sqrt(2))  # Effective sound pressure
+SPL = 20 * np.log10(P / P0)  # Sound Pressure Level in dB
+
+# Print results
+print(f"Frequency: {frequency} Hz")
+print(f"Amplitude: {amplitude}")
+print(f"Wavelength: {wavelength:.2f} m")
+print(f"Sound Pressure Level (SPL): {SPL:.2f} dB")
+
+# Plotting the sine wave
+plt.figure(figsize=(12, 6))
+plt.plot(t, signal)
+plt.title('Sine Wave Signal (440 Hz)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.tight_layout()
+plt.show()
