@@ -2,77 +2,62 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Function to create a sine wave signal
-def create_sine_wave(freq, duration, sample_rate):
-    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
-    return t, wave
+# Parameters for the sine wave and A/D conversion
+frequency = 5            # Frequency of the sine wave (Hz)
+sampling_rate = 50       # Sampling rate (samples per second)
+duration = 1             # Duration of the sine wave (seconds)
+bit_depth = 8            # Bit depth for quantization (e.g., 8 bits)
 
-# Function to perform ADC (Sampling and 1-bit Quantization)
-def adc_signal(signal, sample_rate):
-    # Sample the signal
-    sampled_rate = sample_rate // 4  # Downsample by 4 for this simulation
-    t_sampled = np.arange(0, len(signal), sampled_rate)
-    sampled_signal = signal[t_sampled]
+# Generate the time axis for the analog signal
+t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
 
-    # 1-bit Quantization
-    quantized_signal = np.where(sampled_signal >= 0, 1, 0)  # Map positive to 1 and negative to 0
+# Generate the analog sine wave signal
+amplitude = 1            # Amplitude of the sine wave
+analog_signal = amplitude * np.sin(2 * np.pi * frequency * t)
 
-    # Encode to binary (1-bit)
-    binary_signal = np.array(['1' if level == 1 else '0' for level in quantized_signal])
-    
-    return t_sampled, sampled_signal, quantized_signal, binary_signal
+# Sampling (in this case, we use the same generated signal as "sampled signal")
+sampled_signal = analog_signal.copy()
 
-# Parameters
-freq = 5  # Frequency of the sine wave (Hz)
-duration = 1.0  # Duration in seconds
-sample_rate = 1000  # Original sample rate (Hz)
+# Quantization
+quantization_levels = 2 ** bit_depth
+quantized_signal = np.round((sampled_signal + amplitude) * (quantization_levels / (2 * amplitude)) - 0.5)
+quantized_signal = np.clip(quantized_signal, 0, quantization_levels - 1)  # Clip values within the bit depth range
+quantized_signal = quantized_signal * (2 * amplitude / quantization_levels) - amplitude
 
-# Create the sine wave
-t, original_signal = create_sine_wave(freq, duration, sample_rate)
+# Encoding (binary representation)
+encoded_signal = [f"{int(value):0{bit_depth}b}" for value in quantized_signal.astype(int)]
 
-# Perform ADC
-t_sampled, sampled_signal, quantized_signal, binary_signal = adc_signal(original_signal, sample_rate)
+# Plotting the signals for visualization
+plt.figure(figsize=(10, 8))
 
-# Plotting the results
-plt.figure(figsize=(15, 12))
-
-# Original Signal
-plt.subplot(4, 1, 1)
-plt.plot(t, original_signal, label='Original Signal', color='blue')
-plt.title('Original Sine Wave Signal')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude')
-plt.grid()
+# Plot Original Analog Signal
+plt.subplot(3, 1, 1)
+plt.plot(t, analog_signal, label="Analog Signal")
+plt.title("Analog Signal (Continuous)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
 plt.legend()
 
-# Sampled Signal
-plt.subplot(4, 1, 2)
-plt.stem(t_sampled / sample_rate, sampled_signal, label='Sampled Signal', linefmt='orange', markerfmt='ro', basefmt=' ')
-plt.title('Sampled Signal')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude')
-plt.grid()
+# Plot Sampled Signal
+plt.subplot(3, 1, 2)
+plt.stem(t, sampled_signal, 'b', markerfmt="bo", label="Sampled Signal")
+plt.title("Sampled Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
 plt.legend()
 
-# Quantized Signal
-plt.subplot(4, 1, 3)
-plt.stem(t_sampled / sample_rate, quantized_signal, label='1-Bit Quantized Signal', linefmt='green', markerfmt='go', basefmt=' ')
-plt.title('1-Bit Quantized Signal')
-plt.xlabel('Time [s]')
-plt.ylabel('Quantized Value')
-plt.grid()
+# Plot Quantized Signal
+plt.subplot(3, 1, 3)
+plt.step(t, quantized_signal, where='mid', label="Quantized Signal", color="orange")
+plt.title("Quantized Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
 plt.legend()
-
-# Binary Encoded Signal
-plt.subplot(4, 1, 4)
-plt.plot(t_sampled / sample_rate, binary_signal, marker='o', linestyle='None', color='purple')
-plt.title('Binary Encoded Signal (1-Bit)')
-plt.xlabel('Time [s]')
-plt.ylabel('Binary Code')
-plt.yticks(['0', '1'])  # One-bit binary representation
-plt.grid()
 
 plt.tight_layout()
 plt.show()
+
+# Display encoded signal (showing the first 10 samples for brevity)
+print("Encoded Signal (first 10 samples):")
+print(encoded_signal[:10])
 ```
