@@ -1,0 +1,52 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function for Overdrive distortion
+def overdrive_distortion(input_wave, gain):
+    # Apply gain and then clip the output
+    output_wave = np.clip(input_wave * gain, -1, 1)
+    return output_wave
+
+# Parameters
+frequency = 440  # Frequency in Hz (A4)
+duration = 0.01  # Duration in seconds
+sample_rate = 44100  # Sample rate in Hz
+
+# Create sine wave
+t, sine_wave = create_sine_wave(frequency, duration, sample_rate)
+
+# Apply Overdrive distortion
+gain = 4  # Set gain for overdrive
+output_wave = overdrive_distortion(sine_wave, gain)
+
+# Transfer Function Calculation
+input_amplitude = np.linspace(-1, 1, 1000)
+output_amplitude = overdrive_distortion(input_amplitude, gain)
+
+# Plotting
+plt.figure(figsize=(12, 6))
+
+# Transfer Function
+plt.subplot(1, 2, 1)
+plt.plot(input_amplitude, output_amplitude, color='blue')
+plt.title('Transfer Function (Overdrive Distortion)')
+plt.xlabel('Input Amplitude')
+plt.ylabel('Output Amplitude')
+plt.grid()
+
+# Sine Wave Output
+plt.subplot(1, 2, 2)
+plt.plot(t, output_wave, color='blue')
+plt.title('Sine Wave Output (Overdrive Distortion)')
+plt.xlabel('Time [s]')
+plt.ylabel('Output Amplitude')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
