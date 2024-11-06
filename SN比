@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave signal
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function to calculate SNR
+def calculate_snr(signal, noise):
+    # Calculate signal power and noise power
+    signal_power = np.mean(signal ** 2)
+    noise_power = np.mean(noise ** 2)
+    snr = 10 * np.log10(signal_power / noise_power)  # Calculate SNR in dB
+    return snr
+
+# Parameters
+freq = 5  # Frequency of the sine wave (Hz)
+duration = 1.0  # Duration in seconds
+sample_rate = 1000  # Sample rate in Hz
+noise_level = 0.1  # Noise amplitude
+
+# Create the original sine wave signal
+t, original_signal = create_sine_wave(freq, duration, sample_rate)
+
+# Generate noise
+noise = noise_level * np.random.normal(size=original_signal.shape)
+
+# Create noisy signal
+noisy_signal = original_signal + noise
+
+# Calculate SNR
+snr_before = calculate_snr(original_signal, np.zeros_like(original_signal))  # SNR before noise
+snr_after = calculate_snr(original_signal, noise)  # SNR after adding noise
+
+# Plotting the results
+plt.figure(figsize=(15, 10))
+
+# Original Signal
+plt.subplot(3, 1, 1)
+plt.plot(t, original_signal, label='Original Signal', color='blue')
+plt.title('Original Sine Wave Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Noisy Signal
+plt.subplot(3, 1, 2)
+plt.plot(t, noisy_signal, label='Noisy Signal', color='orange')
+plt.title('Noisy Signal (SNR After: {:.2f} dB)'.format(snr_after))
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# SNR Calculation
+plt.subplot(3, 1, 3)
+plt.bar(['Before Noise', 'After Noise'], [snr_before, snr_after], color=['blue', 'orange'])
+plt.title('Signal-to-Noise Ratio (SNR)')
+plt.ylabel('SNR [dB]')
+plt.ylim(-10, 10)  # Set limits for better visualization
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+# Output SNR values
+print(f'SNR Before Noise: {snr_before:.2f} dB')
+print(f'SNR After Adding Noise: {snr_after:.2f} dB')
