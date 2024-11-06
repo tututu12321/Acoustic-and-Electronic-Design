@@ -1,0 +1,86 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Amplification Functions
+def inverting_amplifier(input_wave, gain):
+    return -gain * input_wave  # Inverting amplification
+
+def non_inverting_amplifier(input_wave, gain):
+    return (1 + gain) * input_wave  # Non-inverting amplification
+
+def buffer(input_wave):
+    return input_wave  # Buffering (Voltage follower)
+
+# Parameters
+frequency = 440  # Frequency in Hz (A4)
+duration = 0.01  # Duration in seconds
+sample_rate = 44100  # Sample rate in Hz
+input_gain = 2  # Gain for amplifiers
+
+# Create sine wave
+t, sine_wave = create_sine_wave(frequency, duration, sample_rate)
+
+# Apply amplifications
+inverted_wave = inverting_amplifier(sine_wave, input_gain)
+non_inverted_wave = non_inverting_amplifier(sine_wave, input_gain)
+buffered_wave = buffer(sine_wave)
+
+# Gain in dB
+def gain_db(gain):
+    return 20 * np.log10(gain)
+
+# Compute gains
+inverting_gain_dB = gain_db(input_gain)
+non_inverting_gain_dB = gain_db(1 + input_gain)
+buffer_gain_dB = gain_db(1)  # Buffer gain is always 0 dB
+
+# Plotting
+plt.figure(figsize=(12, 10))
+
+# Sine Wave Input
+plt.subplot(4, 1, 1)
+plt.plot(t, sine_wave, label='Input Waveform', color='blue')
+plt.title('Input Waveform')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Inverting Amplifier
+plt.subplot(4, 1, 2)
+plt.plot(t, inverted_wave, label='Inverting Amplifier', color='red')
+plt.title(f'Inverting Amplifier (Gain: {inverting_gain_dB:.2f} dB, Factor: {input_gain}x)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Non-Inverting Amplifier
+plt.subplot(4, 1, 3)
+plt.plot(t, non_inverted_wave, label='Non-Inverting Amplifier', color='green')
+plt.title(f'Non-Inverting Amplifier (Gain: {non_inverting_gain_dB:.2f} dB, Factor: {1 + input_gain}x)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Buffer (Voltage Follower)
+plt.subplot(4, 1, 4)
+plt.plot(t, buffered_wave, label='Buffer (Voltage Follower)', color='purple')
+plt.title(f'Buffer (Gain: {buffer_gain_dB:.2f} dB, Factor: 1x)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+```
