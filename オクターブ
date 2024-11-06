@@ -1,3 +1,4 @@
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -39,3 +40,4 @@ for i, (t, wave, freq) in enumerate(octave_signals):
 
 plt.tight_layout()
 plt.show()
+```
