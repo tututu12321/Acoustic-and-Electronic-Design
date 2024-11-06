@@ -1,0 +1,33 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+import time
+import sounddevice as sd
+
+# Function to generate a click sound
+def generate_click(duration=0.1, frequency=1000):
+    sample_rate = 44100  # Sampling rate
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    click = 0.5 * np.sin(2 * np.pi * frequency * t)  # Sine wave for click sound
+    return (click * 32767).astype(np.int16)  # Convert to int16 format
+
+# Metronome function
+def metronome(tempo, duration):
+    interval = 60 / tempo  # Time between beats in seconds
+    click_sound = generate_click()  # Generate the click sound
+    total_time = duration * 60 / interval  # Total time to play metronome
+
+    print(f"Metronome started at {tempo} BPM for {duration} minutes.")
+    start_time = time.time()
+    
+    while (time.time() - start_time) < total_time:
+        sd.play(click_sound, samplerate=44100)  # Play the click sound
+        sd.wait()  # Wait until the sound has finished playing
+        time.sleep(interval)  # Wait for the interval before the next click
+
+# Parameters
+tempo = 120  # Tempo in BPM
+duration = 1  # Duration in minutes
+
+# Start the metronome
+metronome(tempo, duration)
