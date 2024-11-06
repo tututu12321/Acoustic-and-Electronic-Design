@@ -1,0 +1,108 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Amplitude Modulation (AM)
+def amplitude_modulation(carrier_freq, modulating_signal, sample_rate):
+    t = np.arange(len(modulating_signal)) / sample_rate
+    carrier = np.sin(2 * np.pi * carrier_freq * t)
+    modulated_signal = carrier * (1 + modulating_signal)
+    return modulated_signal
+
+# Frequency Modulation (FM)
+def frequency_modulation(carrier_freq, modulating_signal, sample_rate, modulation_index):
+    t = np.arange(len(modulating_signal)) / sample_rate
+    modulated_signal = np.sin(2 * np.pi * carrier_freq * t + modulation_index * modulating_signal)
+    return modulated_signal
+
+# Phase Modulation (PM)
+def phase_modulation(carrier_freq, modulating_signal, sample_rate, phase_deviation):
+    t = np.arange(len(modulating_signal)) / sample_rate
+    modulated_signal = np.sin(2 * np.pi * carrier_freq * t + phase_deviation * modulating_signal)
+    return modulated_signal
+
+# Binary Phase Shift Keying (BPSK)
+def binary_phase_shift_keying(data, carrier_freq, sample_rate):
+    t = np.arange(len(data)) / sample_rate
+    modulated_signal = np.sin(2 * np.pi * carrier_freq * t + np.pi * data)
+    return modulated_signal
+
+# Parameters
+sample_rate = 44100  # Sample rate in Hz
+duration = 1.0  # Duration in seconds
+carrier_freq = 1000  # Carrier frequency for AM, FM, PM (Hz)
+modulation_index = 2.0  # Modulation index for FM
+phase_deviation = np.pi / 2  # Phase deviation for PM
+data_length = 1000  # Length of binary data
+
+# Create modulating signal
+t, modulating_signal = create_sine_wave(5, duration, sample_rate)  # 5 Hz sine wave
+
+# AM Signal
+am_signal = amplitude_modulation(carrier_freq, modulating_signal, sample_rate)
+
+# FM Signal
+fm_signal = frequency_modulation(carrier_freq, modulating_signal, sample_rate, modulation_index)
+
+# PM Signal
+pm_signal = phase_modulation(carrier_freq, modulating_signal, sample_rate, phase_deviation)
+
+# Generate binary data for BPSK
+binary_data = np.random.choice([0, 1], size=data_length)  # Random binary data (0 and 1)
+bpsk_signal = binary_phase_shift_keying(binary_data, carrier_freq, sample_rate)
+
+# Plotting
+plt.figure(figsize=(15, 12))
+
+# Original Modulating Signal
+plt.subplot(5, 1, 1)
+plt.plot(t, modulating_signal, label='Modulating Signal (5 Hz)', color='blue')
+plt.title('Modulating Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# AM Signal
+plt.subplot(5, 1, 2)
+plt.plot(t, am_signal, label='Amplitude Modulation', color='green')
+plt.title('Amplitude Modulation (AM)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# FM Signal
+plt.subplot(5, 1, 3)
+plt.plot(t, fm_signal, label='Frequency Modulation', color='red')
+plt.title('Frequency Modulation (FM)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# PM Signal
+plt.subplot(5, 1, 4)
+plt.plot(t, pm_signal, label='Phase Modulation', color='purple')
+plt.title('Phase Modulation (PM)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# BPSK Signal
+plt.subplot(5, 1, 5)
+plt.plot(np.arange(len(bpsk_signal)) / sample_rate, bpsk_signal, label='Binary Phase Shift Keying (BPSK)', color='orange')
+plt.title('Binary Phase Shift Keying (BPSK)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
