@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import freqz
+
+# Function to plot Bode diagram
+def plot_bode(g, D, fs, filter_type):
+    # Frequency response
+    w = np.linspace(0, np.pi, 512)
+    
+    if filter_type == 'standard':
+        # Standard Feedback Comb Filter
+        H = 1 / (1 - g * np.exp(-1j * w * D / fs))
+    elif filter_type == 'schroeder':
+        # Schroeder Reverb Feedback Comb Filter
+        H = (np.exp(-1j * w * D / fs)) / (1 - g * np.exp(-1j * w * D / fs))
+    
+    # Magnitude and Phase
+    magnitude = 20 * np.log10(np.abs(H))
+    phase = np.angle(H)
+
+    # Bode plot
+    plt.figure(figsize=(12, 6))
+
+    # Magnitude plot
+    plt.subplot(2, 1, 1)
+    plt.plot(w * fs / (2 * np.pi), magnitude, color='blue')
+    plt.title(f'Bode Plot - {filter_type.capitalize()} Filter')
+    plt.ylabel('Magnitude [dB]')
+    plt.grid()
+
+    # Phase plot
+    plt.subplot(2, 1, 2)
+    plt.plot(w * fs / (2 * np.pi), phase, color='blue')
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Phase [radians]')
+    plt.grid()
+
+    plt.tight_layout()
+    plt.show()
+
+# Parameters
+g = 0.5  # Feedback gain
+D = 2205  # Delay in samples (corresponds to approximately 50ms at 44.1 kHz)
+fs = 44100  # Sampling frequency
+
+# Plot for Standard Feedback Comb Filter
+plot_bode(g, D, fs, 'standard')
+
+# Plot for Schroeder Reverb Feedback Comb Filter
+plot_bode(g, D, fs, 'schroeder')
