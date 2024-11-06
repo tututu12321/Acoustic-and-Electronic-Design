@@ -1,3 +1,4 @@
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import freqz
@@ -48,3 +49,4 @@ plot_bode(g, D, fs, 'standard')
 
 # Plot for Schroeder Reverb Feedback Comb Filter
 plot_bode(g, D, fs, 'schroeder')
+```
