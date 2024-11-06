@@ -1,0 +1,28 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters for the diode
+I_s = 1e-12  # Reverse saturation current (A)
+n = 1.0      # Ideality factor (1 for silicon)
+
+# Diode I-V characteristics function using the Shockley equation
+def diode_current(V, I_s, n):
+    return I_s * (np.exp(V / (n * 0.025)) - 1)  # 0.025 V is the thermal voltage at room temperature
+
+# Voltage range for the diode
+V_d = np.linspace(-0.7, 0.7, 100)  # Diode voltage from -0.7V to 0.7V
+I_d = diode_current(V_d, I_s, n)    # Calculate diode current
+
+# Plotting the I-V characteristics
+plt.figure(figsize=(10, 6))
+plt.plot(V_d, I_d, color='blue')
+plt.title('Diode I-V Characteristics')
+plt.xlabel('Voltage (V)')
+plt.ylabel('Current (A)')
+plt.yscale('log')  # Use logarithmic scale for current
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')  # Horizontal line at y=0
+plt.axvline(0, color='black', linewidth=0.5, linestyle='--')  # Vertical line at x=0
+plt.grid()
+plt.xlim(-0.8, 0.8)
+plt.ylim(1e-14, 1e2)  # Limit y-axis to focus on diode behavior
+plt.show()
