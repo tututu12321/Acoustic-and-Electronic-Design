@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Room dimensions (in meters)
+room_length = 5.0
+room_width = 4.0
+room_height = 3.0
+
+# Absorption coefficients for different materials
+materials = {
+    'Carpet': 0.3,
+    'Curtains': 0.5,
+    'Acoustic Panel': 0.9,
+    'Concrete Wall': 0.1,
+    'Wood Panel': 0.2,
+}
+
+# Calculate the total absorption area
+def calculate_absorption_area(material, area):
+    absorption_coefficient = materials[material]
+    return absorption_coefficient * area
+
+# Room surface areas (assuming a simple rectangular room)
+floor_area = room_length * room_width
+wall_area = 2 * (room_length * room_height + room_width * room_height)  # 4 walls
+
+# Total area for each type of treatment
+total_absorption = 0
+for material in materials.keys():
+    if material == 'Carpet':
+        total_absorption += calculate_absorption_area(material, floor_area)
+    elif material in ['Curtains', 'Acoustic Panel']:
+        total_absorption += calculate_absorption_area(material, wall_area * 0.5)  # Half of walls treated
+    else:
+        total_absorption += calculate_absorption_area(material, wall_area * 0.5)  # Wall area treated
+
+# Simulate sound pressure levels across a frequency range
+frequencies = np.logspace(1, 4, 1000)  # Frequency range from 10 Hz to 10 kHz
+SPL = 20 * np.log10(1 / (1 + total_absorption)) + 94  # Initial SPL calculation
+
+# Calculate SPL for each frequency
+SPL_frequencies = 20 * np.log10(1 / (1 + total_absorption)) + 94 + (frequencies / 10000)  # Adjust for frequency effects
+
+# Plotting the results
+plt.figure(figsize=(12, 6))
+plt.plot(frequencies, SPL_frequencies)
+plt.title('Simulated Sound Pressure Level (SPL) in the Room')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Sound Pressure Level [dB]')
+plt.xscale('log')
+plt.grid(which='both')
+plt.axhline(y=85, color='r', linestyle='--', label='Critical SPL Level (85 dB)')
+plt.legend()
+plt.tight_layout()
+plt.show()
