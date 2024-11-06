@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function to apply a simple compressor
+def apply_compressor(signal, threshold, ratio, attack_time, release_time, gain, sample_rate):
+    output = np.zeros_like(signal)
+    env = np.zeros_like(signal)  # Envelope follower
+    attack_coeff = np.exp(-1.0 / (attack_time * sample_rate))
+    release_coeff = np.exp(-1.0 / (release_time * sample_rate))
+    
+    for i in range(len(signal)):
+        # Update envelope follower
+        if np.abs(signal[i]) > env[i-1] if i > 0 else 0:
+            env[i] = attack_coeff * env[i-1] + (1 - attack_coeff) * np.abs(signal[i])
+        else:
+            env[i] = release_coeff * env[i-1]
+
+        # Apply compression
+        if env[i] > threshold:
+            compressed_level = threshold + (env[i] - threshold) / ratio
+        else:
+            compressed_level = env[i]
+
+        # Output the compressed signal
+        output[i] = signal[i] * (compressed_level / env[i]) * gain
+
+    return output
+
+# Parameters
+frequency = 440  # Frequency of sine wave (A4)
+duration = 1.0   # Duration in seconds
+sample_rate = 44100  # Sample rate in Hz
+
+# Compressor settings
+threshold = 0.1  # Threshold level
+ratio = 4.0      # Compression ratio
+attack_time = 0.01  # Attack time in seconds
+release_time = 0.1   # Release time in seconds
+gain = 1.0       # Output gain
+
+# Create sine wave
+t, sine_wave = create_sine_wave(frequency, duration, sample_rate)
+
+# Apply compressor
+compressed_signal = apply_compressor(sine_wave, threshold, ratio, attack_time, release_time, gain, sample_rate)
+
+# Plotting
+plt.figure(figsize=(15, 10))
+
+# Original Sine Wave
+plt.subplot(2, 1, 1)
+plt.plot(t, sine_wave, label='Original Sine Wave', color='blue')
+plt.title('Original Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Compressed Signal
+plt.subplot(2, 1, 2)
+plt.plot(t, compressed_signal, label='Compressed Signal', color='green')
+plt.title('Compressed Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
