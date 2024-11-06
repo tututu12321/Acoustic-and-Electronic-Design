@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import signal
+
+# Parameter settings
+K_preamp = 10  # Gain of the preamplifier
+K_poweramp = 20  # Gain of the power amplifier
+R_f = 1e3  # Feedback resistance (Ohms)
+tau = R_f * 1e-6  # Time constant (seconds)
+
+# Transfer function of the preamplifier
+H_preamp = signal.TransferFunction([K_preamp], [tau, 1])
+
+# Transfer function of the power amplifier
+H_poweramp = signal.TransferFunction([K_poweramp], [tau, 1])
+
+# Frequency range settings
+w = np.logspace(-2, 2, 500)  # Range from 0.01 Hz to 100 Hz
+
+# Calculate Bode plot data
+w_preamp, mag_preamp, phase_preamp = signal.bode(H_preamp, w)
+w_poweramp, mag_poweramp, phase_poweramp = signal.bode(H_poweramp, w)
+
+# Plotting the Bode plots
+plt.figure(figsize=(15, 12))
+
+# Magnitude plot for the preamplifier
+plt.subplot(2, 2, 1)
+plt.semilogx(w_preamp, mag_preamp, label='Magnitude (dB)', color='blue')
+plt.title('Bode Plot of Preamplifier')
+plt.ylabel('Magnitude [dB]')
+plt.grid()
+plt.legend()
+
+# Phase plot for the preamplifier
+plt.subplot(2, 2, 2)
+plt.semilogx(w_preamp, phase_preamp, label='Phase (degrees)', color='orange')
+plt.title('Phase Response of Preamplifier')
+plt.ylabel('Phase [degrees]')
+plt.xlabel('Frequency [rad/s]')
+plt.grid()
+plt.legend()
+
+# Magnitude plot for the power amplifier
+plt.subplot(2, 2, 3)
+plt.semilogx(w_poweramp, mag_poweramp, label='Magnitude (dB)', color='green')
+plt.title('Bode Plot of Power Amplifier')
+plt.ylabel('Magnitude [dB]')
+plt.grid()
+plt.legend()
+
+# Phase plot for the power amplifier
+plt.subplot(2, 2, 4)
+plt.semilogx(w_poweramp, phase_poweramp, label='Phase (degrees)', color='red')
+plt.title('Phase Response of Power Amplifier')
+plt.ylabel('Phase [degrees]')
+plt.xlabel('Frequency [rad/s]')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
