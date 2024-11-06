@@ -1,0 +1,40 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import signal
+
+# Parameters
+A = 1.0      # Gain factor
+tau = 1.0    # Time constant
+
+# Define the transfer function for the first-order lag system
+num = [1]  # Numerator coefficients
+den = [tau**2, tau, 1]  # Denominator coefficients for (1/(tau*s + 1))^2
+H = signal.TransferFunction([A**2], den)
+
+# Frequency range for Bode plot
+w = np.logspace(-2, 2, 1000)  # Frequency range from 0.01 to 100 rad/s
+
+# Compute Bode plot data
+w, mag, phase = signal.bode(H, w)
+
+# Plotting the Bode plot
+plt.figure(figsize=(15, 10))
+
+# Magnitude plot
+plt.subplot(2, 1, 1)
+plt.semilogx(w, mag, label='Magnitude (dB)', color='blue')
+plt.title('Bode Plot of A^2 * (1/(tau*s + 1))^2')
+plt.ylabel('Magnitude [dB]')
+plt.grid()
+plt.legend()
+
+# Phase plot
+plt.subplot(2, 1, 2)
+plt.semilogx(w, phase, label='Phase (degrees)', color='orange')
+plt.ylabel('Phase [degrees]')
+plt.xlabel('Frequency [rad/s]')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
