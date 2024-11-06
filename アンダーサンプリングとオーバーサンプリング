@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
+
+# Function to create a low-pass Butterworth filter
+def butter_lowpass(cutoff, fs, order=5):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return b, a
+
+# Function to apply the low-pass filter to a signal
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+# Sampling settings
+fs = 1000  # Sampling frequency (Hz)
+f_signal = 50  # Frequency of the signal (Hz)
+duration = 1.0  # Length of the signal (seconds)
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+signal = 0.5 * np.sin(2 * np.pi * f_signal * t)
+
+# Sampling
+sampling_ratios = [2, 4, 10]  # Sampling ratios (e.g., undersampling and oversampling)
+plt.figure(figsize=(12, 8))
+
+for ratio in sampling_ratios:
+    sampled_fs = fs / ratio
+    sampled_t = np.linspace(0, duration, int(sampled_fs * duration), endpoint=False)
+    sampled_signal = 0.5 * np.sin(2 * np.pi * f_signal * sampled_t)
+
+    plt.subplot(len(sampling_ratios), 1, sampling_ratios.index(ratio) + 1)
+    plt.plot(sampled_t, sampled_signal, 'o-', label=f'Sampling Ratio = {ratio}')
+    plt.title(f'Sampled Signal with Ratio {ratio}')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid()
+    plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Filter settings
+cutoff = 100  # Cutoff frequency (Hz)
+filtered_signal = butter_lowpass_filter(signal, cutoff, fs)
+
+# Plotting the original and filtered signals
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 1, 1)
+plt.plot(t, signal, label='Original Signal')
+plt.title('Original Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(t, filtered_signal, label='Filtered Signal (Anti-Aliasing Filter)', color='orange')
+plt.title('Signal after Anti-Aliasing Filter')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
