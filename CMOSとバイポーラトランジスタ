@@ -1,3 +1,6 @@
+```python
+
+```
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,3 +35,4 @@ plt.grid()
 
 plt.tight_layout()
 plt.show()
+```
