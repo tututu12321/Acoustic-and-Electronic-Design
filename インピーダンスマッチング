@@ -1,0 +1,32 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Constants
+V_IN = 50  # Input voltage [V]
+R_OUT = 50  # Output impedance [Ω]
+R_IN = 50   # Input impedance [Ω] (fixed)
+
+# Calculate power consumption
+P = (V_IN ** 2) * R_IN / (R_OUT + R_IN) ** 2
+
+# Display the result
+print(f"Power Consumption P: {P:.2f} W")
+
+# Plotting
+R_IN_values = np.linspace(1, 200, 200)  # Range for R_IN
+P_values = (V_IN ** 2) * R_IN_values / (R_OUT + R_IN_values) ** 2  # Calculate power consumption
+
+# Find maximum power consumption
+max_power = np.max(P_values)
+optimal_R_IN = R_IN_values[np.argmax(P_values)]
+
+plt.figure(figsize=(10, 6))
+plt.plot(R_IN_values, P_values, label='Power Consumption P')
+plt.axhline(max_power, color='red', linestyle='--', label='Max Power')
+plt.axvline(optimal_R_IN, color='green', linestyle='--', label='Optimal R_IN = 50Ω')
+plt.title('Power Consumption vs Input Impedance')
+plt.xlabel('Input Impedance R_IN (Ω)')
+plt.ylabel('Power Consumption P (W)')
+plt.legend()
+plt.grid()
+plt.show()
