@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to generate an ADSR envelope
+def generate_adsr(envelope_duration, attack_time, decay_time, sustain_level, release_time, sample_rate):
+    total_samples = int(envelope_duration * sample_rate)
+    
+    # Time array
+    t = np.linspace(0, envelope_duration, total_samples)
+    
+    # Create envelope
+    envelope = np.zeros(total_samples)
+
+    # Attack phase
+    attack_end = int(attack_time * sample_rate)
+    envelope[:attack_end] = np.linspace(0, 1, attack_end)
+
+    # Decay phase
+    decay_end = attack_end + int(decay_time * sample_rate)
+    envelope[attack_end:decay_end] = np.linspace(1, sustain_level, decay_end - attack_end)
+
+    # Sustain phase
+    sustain_end = decay_end + int((envelope_duration - (attack_time + decay_time + release_time)) * sample_rate)
+    envelope[decay_end:sustain_end] = sustain_level
+
+    # Release phase
+    envelope[sustain_end:] = np.linspace(sustain_level, 0, total_samples - sustain_end)
+
+    return t, envelope
+
+# Parameters
+envelope_duration = 5.0  # Total duration of the envelope in seconds
+attack_time = 1.0        # Time taken for the sound to reach max amplitude
+decay_time = 1.0         # Time taken for the sound to drop to sustain level
+sustain_level = 0.7      # Sustained amplitude level
+release_time = 1.5       # Time taken for the sound to fade out
+sample_rate = 44100      # Sample rate in Hz
+
+# Generate ADSR envelope
+t, envelope = generate_adsr(envelope_duration, attack_time, decay_time, sustain_level, release_time, sample_rate)
+
+# Plotting the envelope
+plt.figure(figsize=(12, 6))
+plt.plot(t, envelope, label='ADSR Envelope', color='blue')
+plt.title('ADSR Envelope of Sound')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')  # Line at 0 amplitude
+plt.grid()
+plt.legend()
+plt.xlim(0, envelope_duration)
+plt.ylim(-0.1, 1.1)  # Limit y-axis for better visibility
+plt.show()
