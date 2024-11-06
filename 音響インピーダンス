@@ -1,0 +1,46 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to calculate acoustic impedance
+def calculate_acoustic_impedance(pressure, velocity):
+    impedance = pressure / velocity
+    return impedance
+
+# Sample data
+time = np.linspace(0, 1, 1000)  # Time array (1 second)
+frequency = 440  # Frequency of the sound wave (Hz)
+
+# Generate a sound pressure wave (sine wave)
+pressure = 0.5 * np.sin(2 * np.pi * frequency * time)  # Amplitude of 0.5 Pa
+
+# Assume a constant particle velocity for this example (arbitrary value)
+particle_velocity = 0.1 * np.ones_like(time)  # Constant velocity of 0.1 m/s
+
+# Calculate acoustic impedance
+acoustic_impedance = calculate_acoustic_impedance(pressure, particle_velocity)
+
+# Plotting
+plt.figure(figsize=(12, 6))
+plt.subplot(3, 1, 1)
+plt.plot(time, pressure, label='Sound Pressure (Pa)', color='blue')
+plt.title('Sound Pressure Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Pressure [Pa]')
+plt.legend()
+
+plt.subplot(3, 1, 2)
+plt.plot(time, particle_velocity, label='Particle Velocity (m/s)', color='orange')
+plt.title('Particle Velocity')
+plt.xlabel('Time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.legend()
+
+plt.subplot(3, 1, 3)
+plt.plot(time, acoustic_impedance, label='Acoustic Impedance (Pa·s/m)', color='green')
+plt.title('Acoustic Impedance')
+plt.xlabel('Time [s]')
+plt.ylabel('Impedance [Pa·s/m]')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
