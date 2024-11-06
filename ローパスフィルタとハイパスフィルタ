@@ -1,0 +1,104 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter, freqz
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Butterworth filter design
+def butter_lowpass(cutoff, fs, order=5):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return b, a
+
+def butter_highpass(cutoff, fs, order=5):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='high', analog=False)
+    return b, a
+
+# Apply the filter to a signal
+def apply_filter(data, b, a):
+    return lfilter(b, a, data)
+
+# Bode plot function
+def plot_bode(b, a, fs):
+    w, h = freqz(b, a, worN=8000)
+    plt.figure(figsize=(12, 6))
+
+    # Magnitude
+    plt.subplot(2, 1, 1)
+    plt.plot(0.5 * fs * w / np.pi, np.abs(h), 'b')
+    plt.title('Bode Plot')
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Magnitude')
+    plt.grid()
+
+    # Phase
+    plt.subplot(2, 1, 2)
+    plt.plot(0.5 * fs * w / np.pi, np.angle(h), 'b')
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Phase [radians]')
+    plt.grid()
+
+    plt.tight_layout()
+
+# Parameters
+fs = 5000  # Sample rate, Hz
+cutoff = 500  # Cutoff frequency, Hz
+order = 5  # Filter order
+duration = 0.1  # Duration in seconds
+frequency = 50  # Frequency of the sine wave input
+
+# Create a sine wave
+t, sine_wave = create_sine_wave(frequency, duration, fs)
+
+# Design filters
+b_lpf, a_lpf = butter_lowpass(cutoff, fs, order)
+b_hpf, a_hpf = butter_highpass(cutoff, fs, order)
+
+# Apply filters
+lpf_output = apply_filter(sine_wave, b_lpf, a_lpf)
+hpf_output = apply_filter(sine_wave, b_hpf, a_hpf)
+
+# Plotting results
+plt.figure(figsize=(12, 10))
+
+# Input Sine Wave
+plt.subplot(3, 1, 1)
+plt.plot(t, sine_wave, label='Input Sine Wave', color='blue')
+plt.title('Input Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Low-Pass Filter Output
+plt.subplot(3, 1, 2)
+plt.plot(t, lpf_output, label='Low-Pass Filter Output', color='red')
+plt.title('Low-Pass Filter Output')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# High-Pass Filter Output
+plt.subplot(3, 1, 3)
+plt.plot(t, hpf_output, label='High-Pass Filter Output', color='green')
+plt.title('High-Pass Filter Output')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+
+# Plot Bode diagrams
+plot_bode(b_lpf, a_lpf, fs)
+plt.figure(figsize=(6, 4))
+plot_bode(b_hpf, a_hpf, fs)
+plt.show()
