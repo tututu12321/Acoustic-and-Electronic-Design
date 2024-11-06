@@ -2,29 +2,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Parameters for the diode
-I_s = 1e-12  # Reverse saturation current (A)
-n = 1.0      # Ideality factor (1 for silicon)
+# Constants
+I0 = 1e-12  # Saturation current (A)
+q = 1.602e-19  # Elementary charge (C)
+k = 1.38e-23  # Boltzmann constant (J/K)
+T = 300  # Temperature in Kelvin (K)
 
-# Diode I-V characteristics function using the Shockley equation
-def diode_current(V, I_s, n):
-    return I_s * (np.exp(V / (n * 0.025)) - 1)  # 0.025 V is the thermal voltage at room temperature
+# Voltage range for the plot
+V = np.linspace(-0.1, 0.8, 500)  # Voltage range from -0.1V to 0.8V
 
-# Voltage range for the diode
-V_d = np.linspace(-0.7, 0.7, 100)  # Diode voltage from -0.7V to 0.7V
-I_d = diode_current(V_d, I_s, n)    # Calculate diode current
+# Diode equation
+I = I0 * (np.exp(q * V / (k * T)) - 1)
 
-# Plotting the I-V characteristics
+# Plotting
 plt.figure(figsize=(10, 6))
-plt.plot(V_d, I_d, color='blue')
-plt.title('Diode I-V Characteristics')
+plt.plot(V, I, label=r'$I = I_0 \left( e^{\frac{qV}{kT}} - 1 \right)$')
 plt.xlabel('Voltage (V)')
-plt.ylabel('Current (A)')
-plt.yscale('log')  # Use logarithmic scale for current
-plt.axhline(0, color='black', linewidth=0.5, linestyle='--')  # Horizontal line at y=0
-plt.axvline(0, color='black', linewidth=0.5, linestyle='--')  # Vertical line at x=0
-plt.grid()
-plt.xlim(-0.8, 0.8)
-plt.ylim(1e-14, 1e2)  # Limit y-axis to focus on diode behavior
+plt.ylabel('Current (I) [A]')
+plt.title('Diode I-V Characteristic')
+plt.ylim(-1e-12, 1e-3)  # Set limits for better visibility
+plt.grid(True)
+plt.legend()
 plt.show()
+
 ```
