@@ -1,0 +1,52 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to create a sine wave signal
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function to apply tremolo effect
+def apply_tremolo(signal, lfo_freq, depth, sample_rate):
+    t = np.linspace(0, len(signal) / sample_rate, len(signal), endpoint=False)
+    lfo = 1 + depth * np.sin(2 * np.pi * lfo_freq * t)  # LFO signal (1 + depth * sin)
+    tremolo_signal = signal * lfo  # Apply LFO to the original signal
+    return tremolo_signal
+
+# Parameters
+guitar_freq = 440  # Frequency of the guitar signal (A4)
+duration = 2.0  # Duration in seconds
+sample_rate = 10000  # Sample rate in Hz
+lfo_freq = 5  # Frequency of the LFO (5 Hz)
+depth = 0.7  # Depth of the tremolo effect (0 to 1)
+
+# Create the original guitar signal
+t, guitar_signal = create_sine_wave(guitar_freq, duration, sample_rate)
+
+# Apply tremolo effect
+tremolo_signal = apply_tremolo(guitar_signal, lfo_freq, depth, sample_rate)
+
+# Plotting the results
+plt.figure(figsize=(15, 10))
+
+# Original Guitar Signal
+plt.subplot(2, 1, 1)
+plt.plot(t, guitar_signal, label='Original Guitar Signal', color='blue')
+plt.title('Original Guitar Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+# Tremolo Effect Signal
+plt.subplot(2, 1, 2)
+plt.plot(t, tremolo_signal, label='Tremolo Effect Signal', color='orange')
+plt.title('Tremolo Effect Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
