@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to generate cardioid microphone polar pattern
+def cardioid_pattern(theta):
+    # Sensitivity calculation based on angle
+    sensitivity = 1 - np.sin(theta)  # Cardioid pattern
+    return sensitivity
+
+# Create angles for polar plot
+angles = np.linspace(0, 2 * np.pi, 360)  # 360 degrees in radians
+sensitivity = cardioid_pattern(angles)  # Get sensitivity values
+
+# Create polar plot
+plt.figure(figsize=(8, 8))
+ax = plt.subplot(111, projection='polar')
+ax.plot(angles, sensitivity, label='Cardioid Pattern', color='red')
+
+# Additional markings for angles
+ax.set_xticks(np.radians([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]))  # Set custom ticks
+ax.set_xticklabels(['0°', '30°', '60°', '90°', '120°', '150°', '180°', '210°', '240°', '270°', '300°', '330°'])
+
+# Highlight the direction of least sensitivity
+sensitivity_110 = 1 - np.sin(np.radians(110))
+ax.annotate('Least Sensitivity\nat 110°', xy=(np.radians(110), sensitivity_110), 
+            xytext=(np.radians(150), sensitivity_110 + 0.1),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            fontsize=10, color='black')
+
+# Setting radial limits and labels
+ax.set_ylim(0, 1)  # Set radial limits
+ax.set_yticks(np.arange(0, 1.1, 0.2))  # Set y-ticks
+ax.set_yticklabels(['0 dB', '-6 dB', '-12 dB', '-18 dB', '-24 dB'])  # Labels for sensitivity levels
+
+ax.set_title('Cardioid Microphone Polar Pattern', va='bottom')
+plt.legend()
+plt.grid(True)
+plt.show()
