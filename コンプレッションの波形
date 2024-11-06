@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def compressor(input_signal, threshold, ratio):
+    # Function to apply compression
+    output_signal = np.zeros_like(input_signal)
+    for i in range(len(input_signal)):
+        if input_signal[i] > threshold:
+            output_signal[i] = threshold + (input_signal[i] - threshold) / ratio
+        else:
+            output_signal[i] = input_signal[i]
+    return output_signal
+
+# Generate input signal (sine wave)
+fs = 1000  # Sampling frequency
+t = np.arange(0, 1, 1/fs)
+input_signal = np.sin(2 * np.pi * 10 * t)  # Noise-free sine wave
+
+# Compressor settings
+threshold = 0.3  # Threshold level
+ratio = 3        # Compression ratio
+
+# Apply compressor
+output_signal = compressor(input_signal, threshold, ratio)
+
+# Plotting the results
+plt.figure(figsize=(12, 6))
+
+# Plot input signal
+plt.subplot(2, 1, 1)
+plt.plot(t, input_signal, label='Input Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.title('Input Signal')
+plt.legend()
+plt.grid(True)
+
+# Plot output signal
+plt.subplot(2, 1, 2)
+plt.plot(t, output_signal, label='Output Signal with Compression', color='orange')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.title('Output Signal with Compression')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
