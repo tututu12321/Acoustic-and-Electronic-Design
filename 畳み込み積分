@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import convolve
+
+# Define two functions (signals)
+# Signal 1: Rectangular Pulse
+def signal1(t):
+    return np.where((t >= 0) & (t <= 1), 1, 0)
+
+# Signal 2: Triangular Wave
+def signal2(t):
+    return np.maximum(0, 1 - np.abs(t - 0.5) * 2)
+
+# Define the time axis
+t = np.linspace(-1, 3, 400)
+
+# Calculate the signals
+s1 = signal1(t)
+s2 = signal2(t)
+
+# Calculate the convolution
+convolution = convolve(s1, s2, mode='full') * (t[1] - t[0])  # Scale by the sample spacing
+
+# Adjust the time axis for convolution
+t_conv = np.linspace(t[0] + t[0], t[-1] + t[-1], len(convolution))
+
+# Plotting
+plt.figure(figsize=(12, 8))
+
+# Subplot settings
+plt.subplot(3, 1, 1)
+plt.plot(t, s1, label='Signal 1 (Rectangular Pulse)')
+plt.title('Signal 1')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.subplot(3, 1, 2)
+plt.plot(t, s2, label='Signal 2 (Triangular Wave)', color='orange')
+plt.title('Signal 2')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.subplot(3, 1, 3)
+plt.plot(t_conv, convolution, label='Convolution', color='green')
+plt.title('Convolution of Signal 1 and Signal 2')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
