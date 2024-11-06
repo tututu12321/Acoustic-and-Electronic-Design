@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import lfilter
+
+# Function to create a sine wave
+def create_sine_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * freq * t)  # Amplitude of 0.5
+    return t, wave
+
+# Function to apply chorus effect
+def apply_chorus(input_wave, sample_rate, delay_ms, depth, frequency):
+    # Convert delay from milliseconds to samples
+    delay_samples = int(delay_ms / 1000 * sample_rate)
+    
+    # Create delayed wave with slight pitch modulation
+    chorus_wave = np.zeros_like(input_wave)
+    
+    for i in range(len(input_wave)):
+        # Generate a modulation factor
+        modulated_delay = delay_samples + int(depth * np.sin(2 * np.pi * frequency * (i / sample_rate)))
+        if i - modulated_delay >= 0:
+            chorus_wave[i] = input_wave[i] + input_wave[i - modulated_delay] * 0.5  # Mix original and delayed wave
+            
+    return chorus_wave
+
+# Parameters
+frequency = 440  # Frequency of sine wave (A4)
+duration = 1.0   # Duration in seconds
+sample_rate = 44100  # Sample rate in Hz
+
+# Create sine wave
+t, sine_wave = create_sine_wave(frequency, duration, sample_rate)
+
+# Apply chorus effect
+chorus_effect = apply_chorus(sine_wave, sample_rate, delay_ms=30, depth=10, frequency=1.5)
+
+# Plotting
+plt.figure(figsize=(15, 10))  # Increased figure size for better visibility
+
+# Original Sine Wave
+plt.subplot(2, 1, 1)
+plt.plot(t, sine_wave, label='Original Sine Wave', color='blue')
+plt.title('Original Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.xlim(0, duration)  # Show the entire duration
+plt.grid()
+plt.legend()
+
+# Sine Wave with Chorus Effect
+plt.subplot(2, 1, 2)
+plt.plot(t, chorus_effect, label='Sine Wave with Chorus Effect', color='green')
+plt.title('Sine Wave with Chorus Effect')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.xlim(0, duration)  # Show the entire duration
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
