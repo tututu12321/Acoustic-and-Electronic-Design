@@ -1,0 +1,28 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to calculate the directivity pattern (example for cardioid)
+def directivity_pattern(theta, pattern_type='cardioid'):
+    if pattern_type == 'cardioid':
+        return 1 + np.cos(theta)  # Cardioid pattern
+    elif pattern_type == 'omnidirectional':
+        return np.ones_like(theta)  # Omnidirectional
+    elif pattern_type == 'supercardioid':
+        return (1 + 0.5 * np.cos(theta)) / (1 + 0.2 * np.cos(theta))  # Supercardioid
+    else:
+        raise ValueError("Unknown pattern type")
+
+# Parameter setup
+num_points = 360  # Number of points (angular resolution)
+theta = np.linspace(0, 2 * np.pi, num_points)  # Angles (in radians)
+
+# Calculate the directivity pattern
+pattern_type = 'cardioid'  # Type of directivity pattern ('cardioid', 'omnidirectional', 'supercardioid')
+directivity = directivity_pattern(theta, pattern_type)
+
+# Plot the results
+plt.figure(figsize=(8, 8))
+plt.polar(theta, directivity, label=f'{pattern_type.capitalize()} Pattern')
+plt.title('Microphone Directivity Pattern')
+plt.legend()
+plt.show()
