@@ -1,0 +1,43 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+
+# Parameters
+sample_rate = 44100  # Sampling rate in Hz
+duration = 0.5       # Duration of each note in seconds
+
+# Frequencies for the musical notes
+frequencies = {
+    "Do": 261.63,   # C4
+    "Re": 293.66,   # D4
+    "Mi": 329.63,   # E4
+    "Fa": 349.23,   # F4
+    "Sol": 392.00,  # G4
+    "La": 440.00,   # A4
+    "Si": 493.88,   # B4
+    "Do_high": 523.25  # C5
+}
+
+# Generate the sound wave
+t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)  # Time axis
+sound_wave = np.zeros(int(sample_rate * duration) * len(frequencies))  # Initialize sound wave
+
+# Create sound waves for each note
+for note, freq in frequencies.items():
+    note_wave = 0.1 * np.sin(2 * np.pi * freq * t)  # Generate sine wave for each note
+    sound_wave[int(sample_rate * duration) * list(frequencies.keys()).index(note):int(sample_rate * duration) * (list(frequencies.keys()).index(note) + 1)] = note_wave
+
+# Normalize the sound wave
+sound_wave = (sound_wave / np.max(np.abs(sound_wave)) * 32767).astype(np.int16)  # Convert to int16
+
+# Save the sound as a WAV file
+write('do_re_mi_fa_sol_la_si_do.wav', sample_rate, sound_wave)
+
+# Plot the first part of the sound wave
+plt.figure(figsize=(12, 4))
+plt.plot(t[:1000], sound_wave[:1000])  # Plot the first 1000 samples
+plt.title('Sound Wave for Do Re Mi Fa Sol La Si Do')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.show()
