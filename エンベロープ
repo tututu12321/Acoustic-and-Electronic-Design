@@ -1,3 +1,4 @@
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -51,3 +52,4 @@ plt.legend()
 plt.xlim(0, envelope_duration)
 plt.ylim(-0.1, 1.1)  # Limit y-axis for better visibility
 plt.show()
+```
