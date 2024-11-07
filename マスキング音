@@ -1,0 +1,72 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fftpack import fft
+
+# パラメータ設定
+fs = 44100  # サンプリング周波数
+duration = 1.0  # 音声の長さ（秒）
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# マスキング音（強い音、低周波数）
+masker_freq = 1000  # マスキング音の周波数 (1kHz)
+masker_amplitude = 1.0  # マスキング音の振幅
+masker_signal = masker_amplitude * np.sin(2 * np.pi * masker_freq * t)
+
+# マスクされる音（弱い音、高周波数）
+target_freq = 1200  # ターゲット音の周波数 (1.2kHz)
+target_amplitude = 0.2  # ターゲット音の振幅
+target_signal = target_amplitude * np.sin(2 * np.pi * target_freq * t)
+
+# 両方の信号を合成
+combined_signal = masker_signal + target_signal
+
+# FFTで周波数成分を計算
+fft_masker = np.abs(fft(masker_signal))[:len(t) // 2]
+fft_target = np.abs(fft(target_signal))[:len(t) // 2]
+fft_combined = np.abs(fft(combined_signal))[:len(t) // 2]
+frequencies = np.fft.fftfreq(len(t), 1 / fs)[:len(t) // 2]
+
+# プロット
+plt.figure(figsize=(12, 10))
+
+# マスキング音の波形
+plt.subplot(4, 1, 1)
+plt.plot(t, masker_signal, color='orange')
+plt.title("Masker Signal (1kHz)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# ターゲット音の波形
+plt.subplot(4, 1, 2)
+plt.plot(t, target_signal, color='blue')
+plt.title("Target Signal (1.2kHz)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# 合成信号の波形
+plt.subplot(4, 1, 3)
+plt.plot(t, combined_signal, color='purple')
+plt.title("Combined Signal (Masker + Target)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# 周波数成分のプロット
+plt.subplot(4, 1, 4)
+plt.plot(frequencies, 20 * np.log10(fft_masker), label="Masker Spectrum (1kHz)", color='orange')
+plt.plot(frequencies, 20 * np.log10(fft_target), label="Target Spectrum (1.2kHz)", color='blue')
+plt.plot(frequencies, 20 * np.log10(fft_combined), label="Combined Spectrum", color='purple')
+plt.xlim(0, 5000)
+plt.ylim(-60, 20)
+plt.title("Frequency Spectrum with Masking Effect")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Magnitude [dB]")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
