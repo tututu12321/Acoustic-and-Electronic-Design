@@ -1,0 +1,35 @@
+```Python
+import numpy as np
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+
+# ダミー音声のパラメータ設定
+fs = 16000  # サンプリング周波数（Hz）
+duration = 1  # 音声の長さ（秒）
+frequency = 440  # 音の周波数（例: 440Hz、A4）
+
+# サイン波の生成
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+audio_signal = 0.5 * np.sin(2 * np.pi * frequency * t)
+
+# ダミー音声をファイルに保存（任意）
+write("dummy_audio.wav", fs, (audio_signal * 32767).astype(np.int16))
+
+# MFCCの計算
+n_mfcc = 13  # MFCCの次元数
+mfccs = librosa.feature.mfcc(y=audio_signal, sr=fs, n_mfcc=n_mfcc)
+
+# MFCCを標準化（オプション）
+mfccs = (mfccs - np.mean(mfccs, axis=1, keepdims=True)) / np.std(mfccs, axis=1, keepdims=True)
+
+# MFCCのプロット
+plt.figure(figsize=(10, 6))
+librosa.display.specshow(mfccs, x_axis='time', sr=fs)
+plt.colorbar(format='%+2.0f dB')
+plt.title('MFCC of Dummy Audio')
+plt.xlabel("Time")
+plt.ylabel("MFCC Coefficients")
+plt.show()
+```
