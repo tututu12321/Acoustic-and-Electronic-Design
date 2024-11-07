@@ -1,0 +1,54 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import medfilt
+
+# サンプルデータ生成
+np.random.seed(0)  # 再現性のためのシード設定
+fs = 500  # サンプリング周波数 (Hz)
+t = np.linspace(0, 1, fs, endpoint=False)  # 1秒間のデータ
+clean_signal = np.sin(2 * np.pi * 5 * t)  # 基本信号 (5Hz の正弦波)
+
+# スパイクノイズの追加
+noise_indices = np.random.choice(len(t), size=30, replace=False)  # ノイズ位置
+noisy_signal = clean_signal.copy()
+noisy_signal[noise_indices] += np.random.normal(0, 1, size=noise_indices.shape)  # ランダムなノイズを加える
+
+# メディアンフィルタ適用
+window_size = 5  # メディアンフィルタのウィンドウサイズ
+filtered_signal = medfilt(noisy_signal, kernel_size=window_size)
+
+# プロット
+plt.figure(figsize=(12, 8))
+
+# 元のノイズ付き信号
+plt.subplot(3, 1, 1)
+plt.plot(t, noisy_signal, label='Noisy Signal')
+plt.title("Noisy Signal with Spike Noise")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# メディアンフィルタ適用後の信号
+plt.subplot(3, 1, 2)
+plt.plot(t, filtered_signal, label='Filtered Signal (Median Filter)', color='orange')
+plt.title("Signal after Median Filtering")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# オリジナル信号 vs フィルタ後信号
+plt.subplot(3, 1, 3)
+plt.plot(t, clean_signal, label='Clean Signal', linestyle='--', color='green')
+plt.plot(t, filtered_signal, label='Filtered Signal (Median Filter)', color='orange')
+plt.title("Comparison of Clean Signal and Filtered Signal")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
