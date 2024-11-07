@@ -1,0 +1,54 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fftpack import fft
+
+# サンプルデータ生成
+fs = 1000  # サンプリング周波数 (Hz)
+duration = 1.0  # 信号の長さ (秒)
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# 基本周波数と高調波を含む信号生成
+fundamental_freq = 50  # 基本周波数 (Hz)
+signal = np.sin(2 * np.pi * fundamental_freq * t)  # 基本周波数の成分
+signal += 0.3 * np.sin(2 * np.pi * 2 * fundamental_freq * t)  # 2次高調波
+signal += 0.2 * np.sin(2 * np.pi * 3 * fundamental_freq * t)  # 3次高調波
+signal += 0.1 * np.sin(2 * np.pi * 4 * fundamental_freq * t)  # 4次高調波
+
+# FFTで周波数成分を取得
+spectrum = np.abs(fft(signal)) / len(signal)
+freqs = np.fft.fftfreq(len(spectrum), 1/fs)
+
+# 基本周波数および高調波成分の振幅を取得
+fundamental_amplitude = spectrum[np.argmax(np.abs(freqs - fundamental_freq) < 1e-3)]
+harmonics_amplitude = np.array([spectrum[np.argmax(np.abs(freqs - n * fundamental_freq) < 1e-3)] 
+                                for n in range(2, 5)])  # 2次から4次まで
+
+# THDの計算
+thd = np.sqrt(np.sum(harmonics_amplitude**2)) / fundamental_amplitude * 100  # パーセントで表示
+
+# 結果表示
+print(f"THD: {thd:.2f}%")
+
+# プロット
+plt.figure(figsize=(12, 6))
+
+# 時間領域の信号
+plt.subplot(2, 1, 1)
+plt.plot(t, signal)
+plt.title("Time Domain Signal with Harmonics")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# 周波数スペクトル
+plt.subplot(2, 1, 2)
+plt.plot(freqs[:len(freqs)//2], 20 * np.log10(spectrum[:len(spectrum)//2]))  # dBスケール
+plt.title("Frequency Spectrum")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Magnitude [dB]")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
