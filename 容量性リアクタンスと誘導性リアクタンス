@@ -1,0 +1,32 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 定数設定
+C = 1e-6  # 容量 (F)
+L = 1e-3  # インダクタンス (H)
+frequencies = np.logspace(1, 6, 500)  # 10Hzから1MHzまでの周波数範囲 (Hz)
+
+# リアクタンスの計算
+X_C = 1 / (2 * np.pi * frequencies * C)  # 容量性リアクタンス
+X_L = 2 * np.pi * frequencies * L        # 誘導性リアクタンス
+
+# プロット
+plt.figure(figsize=(10, 6))
+
+# 容量性リアクタンスのプロット
+plt.plot(frequencies, X_C, label="Capacitive Reactance $X_C = \\frac{1}{2\\pi f C}$", color='blue')
+
+# 誘導性リアクタンスのプロット
+plt.plot(frequencies, X_L, label="Inductive Reactance $X_L = 2\\pi f L$", color='red')
+
+# プロット設定
+plt.xscale('log')
+plt.yscale('log')
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Reactance [Ω]")
+plt.title("Capacitive and Inductive Reactance vs Frequency")
+plt.legend()
+plt.grid(which="both", linestyle="--", linewidth=0.5)
+plt.show()
+```
