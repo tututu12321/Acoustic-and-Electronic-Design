@@ -1,0 +1,52 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# パラメータ設定
+threshold = 0.5    # スレッショルド (0-1の範囲)
+ratio = 4.0        # 圧縮レシオ
+attack_time = 0.01 # アタックタイム (秒)
+release_time = 0.1 # リリースタイム (秒)
+fs = 44100         # サンプリング周波数
+duration = 1.0     # 信号の長さ (秒)
+
+# 時間軸の作成
+t = np.linspace(0, duration, int(fs * duration))
+
+# 入力信号の作成（サイン波）
+input_signal = np.sin(2 * np.pi * 5 * t) + 0.3 * np.sin(2 * np.pi * 50 * t)
+
+# 圧縮ゲインの計算
+compressed_signal = np.zeros_like(input_signal)
+gain = 1.0
+attack_coeff = np.exp(-1.0 / (fs * attack_time))
+release_coeff = np.exp(-1.0 / (fs * release_time))
+
+for i in range(1, len(input_signal)):
+    level = abs(input_signal[i])
+    if level > threshold:
+        target_gain = threshold + (level - threshold) / ratio
+    else:
+        target_gain = level
+    
+    # アタック/リリースを使用したゲインの平滑化
+    if target_gain < gain:
+        gain = attack_coeff * gain + (1 - attack_coeff) * target_gain
+    else:
+        gain = release_coeff * gain + (1 - release_coeff) * target_gain
+    
+    compressed_signal[i] = input_signal[i] * gain
+
+# プロット
+plt.figure(figsize=(10, 6))
+plt.plot(t, input_signal, label="Input Signal", alpha=0.6)
+plt.plot(t, compressed_signal, label="Compressed Signal", alpha=0.8)
+plt.axhline(threshold, color='red', linestyle='--', label="Threshold")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.title("VCA Compressor Simulation")
+plt.grid()
+plt.show()
+
+```
