@@ -1,0 +1,45 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import firwin, iirfilter, freqz
+
+# フィルタパラメータ
+fs = 48000  # サンプリング周波数 (Hz)
+cutoff = 5000  # カットオフ周波数 (Hz)
+numtaps = 101  # FIRフィルタのタップ数（フィルタの次数 + 1）
+order = 4     # IIRフィルタの次数
+
+# FIRフィルタの設計
+fir_coefficients = firwin(numtaps, cutoff, fs=fs, pass_zero="lowpass")
+# IIRフィルタの設計 (バターワースフィルタ)
+iir_b, iir_a = iirfilter(order, cutoff, fs=fs, btype='low', ftype='butter')
+
+# 周波数応答の計算
+w_fir, h_fir = freqz(fir_coefficients, worN=8000, fs=fs)
+w_iir, h_iir = freqz(iir_b, iir_a, worN=8000, fs=fs)
+
+# プロット
+plt.figure(figsize=(12, 6))
+
+# FIRフィルタの周波数応答
+plt.subplot(2, 1, 1)
+plt.plot(w_fir, 20 * np.log10(abs(h_fir)), label='FIR Filter')
+plt.title("Frequency Response of FIR and IIR Filters")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Gain (dB)")
+plt.ylim(-100, 5)
+plt.grid(which="both", linestyle="--", linewidth=0.5)
+plt.legend()
+
+# IIRフィルタの周波数応答
+plt.subplot(2, 1, 2)
+plt.plot(w_iir, 20 * np.log10(abs(h_iir)), label='IIR Filter', color='orange')
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Gain (dB)")
+plt.ylim(-100, 5)
+plt.grid(which="both", linestyle="--", linewidth=0.5)
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
