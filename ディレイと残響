@@ -1,0 +1,42 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# パラメータ設定
+delay_time = 0.5  # ディレイ時間 (秒)
+feedback = 0.7    # フィードバック率 (次のディレイ音の減衰率)
+effect_level = 0.8  # エフェクトレベル (最初のディレイ音の音量)
+
+# 時間軸
+duration = 5  # 全体の再生時間 (秒)
+fs = 44100    # サンプリング周波数 (Hz)
+t = np.linspace(0, duration, int(fs * duration))
+
+# 入力信号の作成（インパルス音）
+input_signal = np.zeros_like(t)
+input_signal[0] = 1  # 初期のインパルス音
+
+# ディレイ信号の生成
+output_signal = np.zeros_like(t)
+delay_samples = int(delay_time * fs)
+
+for i in range(0, len(output_signal), delay_samples):
+    if i == 0:
+        # 最初のディレイ音のレベル
+        output_signal[i] = input_signal[0] * effect_level
+    else:
+        # フィードバックによる減衰
+        output_signal[i] = output_signal[i - delay_samples] * feedback
+
+# プロット
+plt.figure(figsize=(10, 5))
+plt.plot(t, output_signal, label="Delayed Signal", color="dodgerblue")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.title("Delay Effect with Feedback")
+plt.xlim(0, duration)
+plt.ylim(-1, 1)
+plt.grid(True)
+plt.legend()
+plt.show()
+```
