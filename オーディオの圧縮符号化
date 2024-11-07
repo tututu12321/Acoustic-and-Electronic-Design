@@ -1,0 +1,60 @@
+```Python
+import numpy as np
+import soundfile as sf
+from scipy.fftpack import dct, idct
+import matplotlib.pyplot as plt
+
+# オーディオファイルの読み込み（16kHzのサイン波を生成して代用可能）
+def generate_dummy_audio(fs=16000, duration=2.0, frequency=440):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    audio_signal = 0.5 * np.sin(2 * np.pi * frequency * t)
+    sf.write("dummy_audio.wav", audio_signal, fs)
+    return audio_signal, fs
+
+# ダミーオーディオ生成
+audio, fs = generate_dummy_audio()
+
+# 離散コサイン変換（DCT）で圧縮
+dct_transformed = dct(audio, norm='ortho')
+
+# 重要な成分のみを残す（圧縮率50%で圧縮）
+compression_ratio = 0.5
+threshold = int(len(dct_transformed) * compression_ratio)
+dct_compressed = np.copy(dct_transformed)
+dct_compressed[threshold:] = 0  # 残りの成分をゼロにする
+
+# 離散コサイン逆変換（IDCT）で復元
+audio_restored = idct(dct_compressed, norm='ortho')
+
+# 圧縮後のファイルとして保存
+sf.write("restored_audio.wav", audio_restored, fs)
+
+# 結果のプロット
+plt.figure(figsize=(12, 8))
+
+# 元のオーディオ信号
+plt.subplot(3, 1, 1)
+plt.plot(audio, color='blue')
+plt.title("Original Audio Signal")
+plt.xlabel("Sample")
+plt.ylabel("Amplitude")
+
+# DCT変換後のスペクトル（圧縮前）
+plt.subplot(3, 1, 2)
+plt.plot(dct_transformed, color='orange')
+plt.title("DCT Transformed Spectrum (Before Compression)")
+plt.xlabel("DCT Coefficient")
+plt.ylabel("Amplitude")
+
+# 圧縮後のスペクトル（低成分のみ残した状態）
+plt.subplot(3, 1, 3)
+plt.plot(dct_compressed, color='green')
+plt.title("DCT Transformed Spectrum (After Compression)")
+plt.xlabel("DCT Coefficient")
+plt.ylabel("Amplitude")
+
+plt.tight_layout()
+plt.show()
+
+print("圧縮後の音声ファイル 'restored_audio.wav' が生成されました。")
+```
