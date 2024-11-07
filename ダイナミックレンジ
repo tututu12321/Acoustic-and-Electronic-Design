@@ -1,0 +1,47 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ダミー音声の生成
+fs = 44100  # サンプリング周波数
+duration = 2.0  # 音声の長さ（秒）
+frequency = 440  # 基本周波数（Hz）
+
+# 時間軸
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# サイン波成分とノイズを合成してダミー音声信号を生成
+signal = 0.5 * np.sin(2 * np.pi * frequency * t)  # サイン波（振幅0.5）
+noise = 0.05 * np.random.normal(0, 1, len(t))     # ランダムノイズ（振幅0.05）
+audio_signal = signal + noise
+
+# ダイナミックレンジの計算
+peak_level = np.max(np.abs(audio_signal))  # ピークレベル
+rms_level = np.sqrt(np.mean(audio_signal**2))  # RMSレベル
+
+# ダイナミックレンジ（dB単位）
+dynamic_range = 20 * np.log10(peak_level / rms_level)
+print(f"ダイナミックレンジ: {dynamic_range:.2f} dB")
+
+# プロット
+plt.figure(figsize=(12, 6))
+
+# 音声信号の波形
+plt.subplot(2, 1, 1)
+plt.plot(t, audio_signal)
+plt.title("Audio Signal with Noise")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# 音声信号の振幅のヒストグラム（ダイナミックレンジの視覚化）
+plt.subplot(2, 1, 2)
+plt.hist(audio_signal, bins=100, color='skyblue', edgecolor='black')
+plt.title("Amplitude Histogram")
+plt.xlabel("Amplitude")
+plt.ylabel("Frequency")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
