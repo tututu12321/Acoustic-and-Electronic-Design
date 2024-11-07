@@ -1,0 +1,21 @@
+```Python
+import speech_recognition as sr
+
+# 音声認識の初期化
+recognizer = sr.Recognizer()
+
+# 実際の音声ファイル（自分の音声ファイルを用意してください）
+audio_file_path = "your_actual_audio.wav"  # 実際の音声ファイルを指定
+
+# 音声ファイルを読み込み、音声認識を実行
+with sr.AudioFile(audio_file_path) as source:
+    audio_data = recognizer.record(source)
+    try:
+        # Google Speech Recognition APIを使って音声認識
+        text = recognizer.recognize_google(audio_data, language="en-US")
+        print("認識されたテキスト:", text)
+    except sr.UnknownValueError:
+        print("音声を認識できませんでした。")
+    except sr.RequestError as e:
+        print(f"Google Speech Recognition APIへのリクエストに失敗しました: {e}")
+```
