@@ -1,0 +1,78 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+from scipy.signal import lfilter, find_peaks
+from scipy.linalg import toeplitz, solve_toeplitz
+
+# ダミー音声の生成（440Hzのサイン波）
+fs = 16000  # サンプリング周波数
+duration = 1  # 音声の長さ（秒）
+frequency = 440  # サイン波の周波数（Hz）
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+y = 0.5 * np.sin(2 * np.pi * frequency * t)  # 440Hzのサイン波
+
+# パワースペクトルの計算
+n_fft = 2048  # FFTのサンプル数
+hop_length = 512  # フレームのシフト幅
+D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
+power_spectrum = librosa.amplitude_to_db(D, ref=np.max)
+
+# LPC係数の計算関数
+def compute_lpc(y, order):
+    # 自己相関
+    autocorr = np.correlate(y, y, mode='full')
+    autocorr = autocorr[len(autocorr)//2:]
+    
+    # Toeplitz行列と右辺ベクトルの作成
+    R = toeplitz(autocorr[:order])
+    r = autocorr[1:order+1]
+    
+    # LPC係数の計算
+    lpc_coefficients = solve_toeplitz((autocorr[:order], autocorr[:order]), r)
+    return np.concatenate(([1], -lpc_coefficients))
+
+# フォルマント推定
+def get_formants(y, sr, order=16):
+    # LPC係数を計算
+    lpc_coefficients = compute_lpc(y, order)
+    
+    # LPCのフィルタを使って周波数レスポンスを計算
+    w, h = np.linspace(0, np.pi, 512), lfilter([1], lpc_coefficients, np.ones(512))
+    frequencies = w * (sr / (2 * np.pi))  # 周波数スケールに変換
+    response = 20 * np.log10(np.abs(h))
+    
+    # ピークを探してフォルマントを推定
+    peaks, _ = find_peaks(response, height=0)
+    formant_frequencies = frequencies[peaks][:3]  # F1, F2, F3の推定
+    return formant_frequencies, frequencies, response
+
+# フォルマント周波数の取得
+formant_freqs, freqs, lpc_response = get_formants(y, fs)
+
+# パワースペクトルとフォルマントのプロット
+plt.figure(figsize=(12, 8))
+
+# パワースペクトルのプロット
+plt.subplot(2, 1, 1)
+librosa.display.specshow(power_spectrum, sr=fs, hop_length=hop_length, x_axis='time', y_axis='log')
+plt.colorbar(format='%+2.0f dB')
+plt.title("Power Spectrum")
+
+# フォルマント周波数のプロット
+plt.subplot(2, 1, 2)
+plt.plot(freqs, lpc_response, label="LPC Spectrum")
+for i, f in enumerate(formant_freqs):
+    plt.plot(f, lpc_response[np.argmin(np.abs(freqs - f))], 'o', label=f'F{i+1} = {f:.1f} Hz')
+plt.title("Formant Frequency Analysis")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Amplitude [dB]")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+print("フォルマント周波数 (F1, F2, F3):", formant_freqs)
+```
