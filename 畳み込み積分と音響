@@ -1,0 +1,70 @@
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+from scipy.signal import convolve
+from scipy.io.wavfile import write
+
+# ダミー音声の生成（1秒間の440Hzサイン波）
+fs = 16000  # サンプリング周波数
+duration = 1  # 音声の長さ（秒）
+frequency = 440  # 周波数（Hz）
+
+# サイン波の生成
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+audio_signal = 0.5 * np.sin(2 * np.pi * frequency * t)
+
+# エコーのインパルス応答を生成
+echo_impulse_response = np.zeros(int(0.5 * fs))  # 0.5秒の長さのインパルス応答
+echo_impulse_response[0] = 1                     # 直接音
+echo_impulse_response[int(0.2 * fs)] = 0.6       # 200ms後のエコー
+echo_impulse_response[int(0.4 * fs)] = 0.3       # 400ms後のエコー
+
+# リバーブのインパルス応答を生成（減衰するランダムエコー）
+reverb_impulse_response = np.random.normal(0, 0.2, int(0.5 * fs))  # 0.5秒の長さ
+reverb_impulse_response[0] = 1  # 直接音
+reverb_impulse_response = np.cumsum(reverb_impulse_response) * np.exp(-np.linspace(0, 5, len(reverb_impulse_response)))
+
+# エコーとリバーブの畳み込み
+echo_signal = convolve(audio_signal, echo_impulse_response, mode='full')
+reverb_signal = convolve(audio_signal, reverb_impulse_response, mode='full')
+
+# 時間軸の生成
+t_echo = np.linspace(0, len(echo_signal) / fs, len(echo_signal), endpoint=False)
+t_reverb = np.linspace(0, len(reverb_signal) / fs, len(reverb_signal), endpoint=False)
+
+# WAVファイルとして保存（オプション）
+write("dummy_echo.wav", fs, (echo_signal * 32767).astype(np.int16))
+write("dummy_reverb.wav", fs, (reverb_signal * 32767).astype(np.int16))
+
+# プロット
+plt.figure(figsize=(12, 10))
+
+# 元のダミー音声
+plt.subplot(3, 1, 1)
+plt.plot(t, audio_signal)
+plt.title("Original Dummy Audio Signal (Sine Wave)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# エコー付き音声
+plt.subplot(3, 1, 2)
+plt.plot(t_echo, echo_signal)
+plt.title("Echo Effect Applied (Convolution with Echo Impulse Response)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# リバーブ付き音声
+plt.subplot(3, 1, 3)
+plt.plot(t_reverb, reverb_signal)
+plt.title("Reverb Effect Applied (Convolution with Reverb Impulse Response)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
