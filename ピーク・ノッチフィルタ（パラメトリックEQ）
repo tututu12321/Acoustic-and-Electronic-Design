@@ -1,0 +1,33 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import freqz
+
+# フィルタのパラメータ
+f0 = 1000  # 中心周波数 (Hz)
+Q = 2      # Q値
+G = 10     # ゲイン（dB）
+
+# サンプリング周波数
+fs = 48000
+
+# 中心周波数とQ値からフィルタ係数を計算
+omega = 2 * np.pi * f0 / fs
+alpha = np.sin(omega) / (2 * Q)
+A = 10 ** (G / 40)  # ゲインの線形スケール
+
+# バイカッドフィルタの係数
+b = [1 + alpha * A, -2 * np.cos(omega), 1 - alpha * A]
+a = [1 + alpha / A, -2 * np.cos(omega), 1 - alpha / A]
+
+# 周波数応答を計算
+w, h = freqz(b, a, fs=fs)
+
+# 振幅応答のプロット（ボード線図）
+plt.figure(figsize=(10, 6))
+plt.semilogx(w, 20 * np.log10(abs(h)))  # dBスケールでプロット
+plt.title("Peak-Notch Filter (Parametric EQ) Frequency Response")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Gain (dB)")
+plt.grid(which='both', linestyle='--', linewidth=0.5)
+plt.axvline(f0, color='r', linestyle='--')  # 中心周波数を赤で表示
+plt.show()
