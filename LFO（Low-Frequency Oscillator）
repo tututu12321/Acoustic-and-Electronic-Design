@@ -1,0 +1,47 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# パラメータ設定
+fs = 1000           # サンプリング周波数 (Hz)
+duration = 2.0      # LFOの長さ (秒)
+frequency = 0.5     # LFOの周波数 (Hz)
+
+# 時間軸の作成
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# LFOの波形生成
+sine_wave = np.sin(2 * np.pi * frequency * t)            # サイン波
+triangle_wave = 2 * np.abs(2 * (t * frequency % 1) - 1) - 1  # 三角波
+square_wave = np.sign(np.sin(2 * np.pi * frequency * t))  # 矩形波 (パルス波)
+
+# プロット
+plt.figure(figsize=(10, 6))
+
+# サイン波
+plt.subplot(3, 1, 1)
+plt.plot(t, sine_wave, label="Sine Wave (LFO)", color="blue")
+plt.ylim(-1.1, 1.1)
+plt.ylabel("Amplitude")
+plt.title("LFO Waveforms")
+plt.grid()
+plt.legend()
+
+# 三角波
+plt.subplot(3, 1, 2)
+plt.plot(t, triangle_wave, label="Triangle Wave (LFO)", color="green")
+plt.ylim(-1.1, 1.1)
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+# 矩形波 (パルス波)
+plt.subplot(3, 1, 3)
+plt.plot(t, square_wave, label="Square Wave (LFO)", color="red")
+plt.ylim(-1.1, 1.1)
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
