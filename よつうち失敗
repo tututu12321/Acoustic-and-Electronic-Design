@@ -1,0 +1,78 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+import IPython.display as ipd
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+tempo = 60  # テンポ (BPM)
+beat_duration = 60 / tempo  # 1拍の持続時間 (秒)
+
+# 音声生成関数
+def generate_wave(frequency, duration, sampling_rate, volume=0.5, noise_level=0.1):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = volume * np.sin(2 * np.pi * frequency * t)  # サイン波
+    noise = noise_level * np.random.normal(0, 1, len(t))  # ノイズ
+    envelope = np.exp(-10 * t)  # 減衰エンベロープ
+    return wave * envelope + noise * envelope
+
+# 各ドラム音の生成
+def generate_kick():
+    """キック"""
+    return generate_wave(frequency=50, duration=beat_duration / 2, sampling_rate=sampling_rate, volume=0.9, noise_level=0.05)
+
+def generate_snare():
+    """スネア"""
+    return generate_wave(frequency=200, duration=beat_duration / 4, sampling_rate=sampling_rate, volume=0.7, noise_level=0.3)
+
+def generate_hihat_closed():
+    """ハイハット（クローズ）"""
+    return generate_wave(frequency=8000, duration=beat_duration / 8, sampling_rate=sampling_rate, volume=0.4, noise_level=0.4)
+
+def generate_hihat_open():
+    """ハイハット（オープン）"""
+    return generate_wave(frequency=8000, duration=beat_duration / 4, sampling_rate=sampling_rate, volume=0.4, noise_level=0.4)
+
+# ダンスビート (1小節分)
+def create_dance_beat():
+    one_bar = []
+    for i in range(16):  # 16分音符単位で配置
+        if i % 4 == 0:  # キックを4分音符ごとに配置
+            one_bar.append(generate_kick())
+        if i == 4 or i == 12:  # スネアを2拍目と4拍目に配置
+            one_bar.append(generate_snare())
+        if i % 2 == 1:  # ハイハットを8分音符で裏打ち
+            one_bar.append(generate_hihat_closed())
+    return np.concatenate(one_bar)
+
+# レゲトンビート (1小節分)
+def create_reggaeton_beat():
+    one_bar = []
+    for i in range(16):  # 16分音符単位で配置
+        if i % 4 == 0:  # キックを4分音符ごとに配置
+            one_bar.append(generate_kick())
+        if i == 5 or i == 13:  # スネアを裏拍に配置
+            one_bar.append(generate_snare())
+        if i % 4 != 0:  # ハイハットを表拍に配置
+            one_bar.append(generate_hihat_closed())
+    return np.concatenate(one_bar)
+
+# 波形生成と結合
+dance_beat = np.tile(create_dance_beat(), 4)  # ダンスビートを4小節
+reggaeton_beat = np.tile(create_reggaeton_beat(), 4)  # レゲトンビートを4小節
+
+# WAVファイルとして保存
+write("dance_beat.wav", sampling_rate, (dance_beat * 32767).astype(np.int16))
+write("reggaeton_beat.wav", sampling_rate, (reggaeton_beat * 32767).astype(np.int16))
+
+# Google Colab用ファイルダウンロード
+files.download("dance_beat.wav")
+files.download("reggaeton_beat.wav")
+
+# 音声再生 (ダンスビート)
+print("ダンスビート再生:")
+ipd.Audio("dance_beat.wav")
+
+# 音声再生 (レゲトンビート)
+print("レゲトンビート再生:")
+ipd.Audio("reggaeton_beat.wav")
