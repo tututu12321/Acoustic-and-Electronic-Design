@@ -1,0 +1,45 @@
+import numpy as np
+from scipy.io.wavfile import write
+import IPython.display as ipd
+import matplotlib.pyplot as plt
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+tempo = 120  # テンポ (BPM)
+beat_duration = 60 / tempo  # 1拍の持続時間 (秒)
+
+# バスドラム（キック）の波形生成
+def generate_kick(frequency=50, duration=0.2, sampling_rate=44100, volume=0.9):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = volume * np.sin(2 * np.pi * frequency * t)  # 基本の低音波
+    envelope = np.exp(-5 * t)  # 減衰エンベロープ
+    return wave * envelope
+
+# 1小節（4拍分）の四つ打ち波形生成
+one_bar_wave = []
+for _ in range(4):  # 1小節内の4拍
+    one_bar_wave.append(generate_kick(duration=beat_duration, sampling_rate=sampling_rate))
+    one_bar_wave.append(np.zeros(int(sampling_rate * (beat_duration / 2))))  # 無音を挿入
+
+# 波形を結合
+one_bar_wave = np.concatenate(one_bar_wave)
+
+# 4小節分のループを生成
+final_wave = np.tile(one_bar_wave, 4)  # 4小節を繰り返し
+
+# WAVファイルとして保存
+output_file = "four_on_the_floor_recreation.wav"
+write(output_file, sampling_rate, (final_wave * 32767).astype(np.int16))
+
+# 波形のプロット
+plt.figure(figsize=(10, 4))
+plt.plot(np.linspace(0, len(final_wave) / sampling_rate, len(final_wave)), final_wave)
+plt.title("Four on the Floor Waveform")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# 音を再生
+print("音を再生します:")
+ipd.Audio(output_file)
