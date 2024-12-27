@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import IPython.display as ipd
+from scipy.io.wavfile import write
+
+# サンプルレート（通常44100Hz）
+sample_rate = 44100
+
+# 時間軸の生成（1秒間）
+t = np.linspace(0, 1, sample_rate)
+
+# ドレミファソラシドの周波数（Hz）
+note_frequencies = {
+    'do': 261.63,  # C4
+    're': 293.66,  # D4
+    'mi': 329.63,  # E4
+    'fa': 349.23,  # F4
+    'so': 392.00,  # G4
+    'la': 440.00,  # A4
+    'si': 493.88,  # B4
+    'do_high': 523.25  # C5 (高いド)
+}
+
+# サイン波を生成する関数
+def generate_sine_wave(frequency, duration=1, sample_rate=44100):
+    return np.sin(2 * np.pi * frequency * t)
+
+# 各音をサイン波で生成
+do_wave = generate_sine_wave(note_frequencies['do'])
+re_wave = generate_sine_wave(note_frequencies['re'])
+mi_wave = generate_sine_wave(note_frequencies['mi'])
+fa_wave = generate_sine_wave(note_frequencies['fa'])
+so_wave = generate_sine_wave(note_frequencies['so'])
+la_wave = generate_sine_wave(note_frequencies['la'])
+si_wave = generate_sine_wave(note_frequencies['si'])
+do_high_wave = generate_sine_wave(note_frequencies['do_high'])
+
+# 各音をWAVファイルとして保存
+write("/content/do_wave.wav", sample_rate, np.int16(do_wave * 32767))
+write("/content/re_wave.wav", sample_rate, np.int16(re_wave * 32767))
+write("/content/mi_wave.wav", sample_rate, np.int16(mi_wave * 32767))
+write("/content/fa_wave.wav", sample_rate, np.int16(fa_wave * 32767))
+write("/content/so_wave.wav", sample_rate, np.int16(so_wave * 32767))
+write("/content/la_wave.wav", sample_rate, np.int16(la_wave * 32767))
+write("/content/si_wave.wav", sample_rate, np.int16(si_wave * 32767))
+write("/content/do_high_wave.wav", sample_rate, np.int16(do_high_wave * 32767))
+
+# 各音のサイン波をプロット
+def plot_sine_wave(wave, title):
+    plt.figure(figsize=(10, 4))
+    plt.plot(t[:1000], wave[:1000])  # 最初の1000サンプルを表示
+    plt.title(f'Sine Wave of {title}')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+    plt.show()
+
+# 各音を個別にプロット
+plot_sine_wave(do_wave, "Do (C4) - 261.63Hz")
+plot_sine_wave(re_wave, "Re (D4) - 293.66Hz")
+plot_sine_wave(mi_wave, "Mi (E4) - 329.63Hz")
+plot_sine_wave(fa_wave, "Fa (F4) - 349.23Hz")
+plot_sine_wave(so_wave, "So (G4) - 392.00Hz")
+plot_sine_wave(la_wave, "La (A4) - 440.00Hz")
+plot_sine_wave(si_wave, "Si (B4) - 493.88Hz")
+plot_sine_wave(do_high_wave, "Do (C5) - 523.25Hz")
+
+# 再生
+ipd.display(ipd.Audio("/content/do_wave.wav"))
+ipd.display(ipd.Audio("/content/re_wave.wav"))
+ipd.display(ipd.Audio("/content/mi_wave.wav"))
+ipd.display(ipd.Audio("/content/fa_wave.wav"))
+ipd.display(ipd.Audio("/content/so_wave.wav"))
+ipd.display(ipd.Audio("/content/la_wave.wav"))
+ipd.display(ipd.Audio("/content/si_wave.wav"))
+ipd.display(ipd.Audio("/content/do_high_wave.wav"))
