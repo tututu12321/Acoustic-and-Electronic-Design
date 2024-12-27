@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 0.5  # 各音の持続時間 (秒)
+
+# メジャースケールとマイナースケールの音程比率
+major_intervals = [0, 2, 4, 5, 7, 9, 11, 12]  # 長音階 (全音-全音-半音-全音-全音-全音-半音)
+minor_intervals = [0, 2, 3, 5, 7, 8, 10, 12]  # 短音階 (全音-半音-全音-全音-半音-全音-全音)
+
+# A4 (440 Hz) を基準にスケールを生成
+def generate_scale(base_freq, intervals):
+    return [base_freq * (2 ** (i / 12)) for i in intervals]
+
+# 波形生成
+def generate_wave(frequencies, duration, sampling_rate):
+    t = np.linspace(0, duration * len(frequencies), int(sampling_rate * duration * len(frequencies)), endpoint=False)
+    wave = np.zeros_like(t)
+    for i, freq in enumerate(frequencies):
+        start = int(i * sampling_rate * duration)
+        end = int((i + 1) * sampling_rate * duration)
+        wave[start:end] = np.sin(2 * np.pi * freq * t[start:end])
+    return t, wave
+
+# メジャースケールとマイナースケールの周波数
+base_frequency = 440.0  # A4 (440 Hz)
+major_scale_freqs = generate_scale(base_frequency, major_intervals)
+minor_scale_freqs = generate_scale(base_frequency, minor_intervals)
+
+# 波形生成
+t_major, wave_major = generate_wave(major_scale_freqs, duration, sampling_rate)
+t_minor, wave_minor = generate_wave(minor_scale_freqs, duration, sampling_rate)
+
+# FFT解析
+def compute_fft(wave, sampling_rate):
+    fft_result = np.fft.fft(wave)
+    freqs = np.fft.fftfreq(len(wave), d=1 / sampling_rate)
+    positive_freqs = freqs[:len(freqs) // 2]
+    positive_fft = np.abs(fft_result[:len(fft_result) // 2])
+    return positive_freqs, positive_fft
+
+freqs_major, fft_major = compute_fft(wave_major, sampling_rate)
+freqs_minor, fft_minor = compute_fft(wave_minor, sampling_rate)
+
+# 波形プロット
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 1, 1)
+plt.plot(t_major[:2000], wave_major[:2000], label="Major Scale Waveform", color='blue')
+plt.title("Major Scale Waveform (First 2000 Samples)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(t_minor[:2000], wave_minor[:2000], label="Minor Scale Waveform", color='green')
+plt.title("Minor Scale Waveform (First 2000 Samples)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# FFTプロット
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 1, 1)
+plt.plot(freqs_major, fft_major, label="Major Scale Spectrum", color='blue')
+plt.title("Major Scale Frequency Spectrum")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(freqs_minor, fft_minor, label="Minor Scale Spectrum", color='green')
+plt.title("Minor Scale Frequency Spectrum")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
