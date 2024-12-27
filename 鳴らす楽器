@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import IPython.display as ipd
+from scipy.io.wavfile import write
+
+# サンプルレート（通常44100Hz）
+sample_rate = 44100
+
+# 時間軸の生成（1秒間）
+t = np.linspace(0, 1, sample_rate)
+
+# ギターのサイン波（撥弦楽器）
+def guitar_sound(frequency=440, duration=1, sample_rate=44100):
+    # ギターの音を簡易的にサイン波でシミュレート
+    return np.sin(2 * np.pi * frequency * t)
+
+# ヴァイオリンの音（擦弦楽器）
+def violin_sound(frequency=440, duration=1, sample_rate=44100):
+    # ヴァイオリンの音をサイン波に歪みを加えたもの
+    return np.sin(2 * np.pi * frequency * t) + 0.5 * np.sin(2 * np.pi * 2 * frequency * t)
+
+# ピアノの音（打弦楽器）
+def piano_sound(frequency=440, duration=1, sample_rate=44100):
+    # ピアノの音を簡単な短いサイン波（ハンマーで打つ）でシミュレート
+    decay = np.exp(-5 * t)  # 衰退をシミュレート
+    return np.sin(2 * np.pi * frequency * t) * decay
+
+# 各楽器のサウンドを生成
+guitar_wave = guitar_sound(440)
+violin_wave = violin_sound(440)
+piano_wave = piano_sound(440)
+
+# 各楽器の音をWAVファイルとして保存
+write("/content/guitar_sound.wav", sample_rate, np.int16(guitar_wave * 32767))
+write("/content/violin_sound.wav", sample_rate, np.int16(violin_wave * 32767))
+write("/content/piano_sound.wav", sample_rate, np.int16(piano_wave * 32767))
+
+# 各楽器の波形をプロット
+def plot_wave(wave, title):
+    plt.figure(figsize=(10, 4))
+    plt.plot(t[:1000], wave[:1000])  # 最初の1000サンプルを表示
+    plt.title(f"{title} Sound Wave")
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+    plt.show()
+
+# 各楽器のサウンドをプロット
+plot_wave(guitar_wave, "Guitar")
+plot_wave(violin_wave, "Violin")
+plot_wave(piano_wave, "Piano")
+
+# 各楽器のサウンドを再生
+ipd.display(ipd.Audio("/content/guitar_sound.wav"))
+ipd.display(ipd.Audio("/content/violin_sound.wav"))
+ipd.display(ipd.Audio("/content/piano_sound.wav"))
