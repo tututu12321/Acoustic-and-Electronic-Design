@@ -1,0 +1,62 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+note_duration = 0.5  # 各音の持続時間 (秒)
+rest_duration = 0.2  # 音と音の間の休符 (秒)
+
+# ギターのフレットと周波数
+string_frequencies = {
+    "E2": 82.41,  # 6弦
+    "A2": 110.00, # 5弦
+    "D3": 146.83, # 4弦
+    "G3": 196.00, # 3弦
+    "B3": 246.94, # 2弦
+    "E4": 329.63  # 1弦
+}
+
+# 音の周波数を計算する関数（フレットごとに半音階）
+def calculate_fret_frequency(base_frequency, fret):
+    return base_frequency * (2 ** (fret / 12))
+
+# 波形生成関数（ギター風）
+def generate_guitar_wave(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+
+    # 基本波 + 倍音
+    wave += 0.6 * np.sin(2 * np.pi * frequency * t)  # 基本波
+    wave += 0.3 * np.sin(2 * np.pi * 2 * frequency * t)  # 2倍音
+    wave += 0.1 * np.sin(2 * np.pi * 3 * frequency * t)  # 3倍音
+
+    # エンベロープ（アタックと減衰）
+    envelope = np.exp(-3 * t)  # 減衰
+    wave *= envelope
+
+    # 正規化
+    return wave / np.max(np.abs(wave))
+
+# 休符波形生成
+def generate_rest(duration, sampling_rate):
+    return np.zeros(int(sampling_rate * duration))
+
+# 6弦から1弦までのすべての音を生成（0フレットから3フレット）
+waveform = []
+for string, base_frequency in string_frequencies.items():
+    for fret in range(4):  # 0フレットから3フレット
+        frequency = calculate_fret_frequency(base_frequency, fret)
+        waveform.append(generate_guitar_wave(frequency, note_duration, sampling_rate))
+        waveform.append(generate_rest(rest_duration, sampling_rate))  # 音の間の休符
+
+# 波形を結合
+combined_wave = np.concatenate(waveform)
+
+# WAVファイルに保存
+output_file = "guitar_0_to_3_frets.wav"
+write(output_file, sampling_rate, (combined_wave * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
