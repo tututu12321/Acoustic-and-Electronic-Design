@@ -1,0 +1,103 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import IPython.display as ipd
+from scipy.io.wavfile import write
+
+# サンプルレート（通常44100Hz）
+sample_rate = 44100
+
+# 時間軸の生成（1秒間）
+t = np.linspace(0, 1, sample_rate)
+
+# 基本のサイン波を生成する関数
+def generate_sine_wave(frequency, duration=1, sample_rate=44100):
+    return np.sin(2 * np.pi * frequency * t)
+
+# サイン波の重ね合わせ
+def combined_sine_waves():
+    wave1 = generate_sine_wave(440)  # 440Hz
+    wave2 = generate_sine_wave(880)  # 880Hz
+    wave3 = generate_sine_wave(1760)  # 1760Hz
+    return wave1 + wave2 + wave3  # 重ね合わせ
+
+# ノコギリ波の生成
+def sawtooth_wave(frequency=440, duration=1, sample_rate=44100):
+    return 2 * (t * frequency - np.floor(t * frequency + 0.5))
+
+# 矩形波の生成
+def square_wave(frequency=440, duration=1, sample_rate=44100):
+    return np.sign(np.sin(2 * np.pi * frequency * t))
+
+# 三角波の生成
+def triangle_wave(frequency=440, duration=1, sample_rate=44100):
+    return 2 * np.abs(2 * (t * frequency - np.floor(t * frequency + 0.5))) - 1
+
+# 白色雑音の生成
+def white_noise(duration=1, sample_rate=44100):
+    return np.random.uniform(-1, 1, sample_rate * duration)
+
+# 電子音の生成（サイン波と矩形波の組み合わせ）
+def electronic_sound():
+    wave1 = generate_sine_wave(440)
+    wave2 = square_wave(440)
+    return wave1 + wave2  # サイン波と矩形波の組み合わせ
+
+# 各波形を生成
+combined_wave = combined_sine_waves()
+saw_wave = sawtooth_wave()
+square_wave_signal = square_wave()
+triangle_wave_signal = triangle_wave()
+noise = white_noise()
+electronic = electronic_sound()
+
+# 各波形をWAVファイルとして保存
+write("/content/combined_sine_waves.wav", sample_rate, np.int16(combined_wave * 32767))
+write("/content/sawtooth_wave.wav", sample_rate, np.int16(saw_wave * 32767))
+write("/content/square_wave.wav", sample_rate, np.int16(square_wave_signal * 32767))
+write("/content/triangle_wave.wav", sample_rate, np.int16(triangle_wave_signal * 32767))
+write("/content/white_noise.wav", sample_rate, np.int16(noise * 32767))
+write("/content/electronic_sound.wav", sample_rate, np.int16(electronic * 32767))
+
+# 各波形のFFTプロット
+def plot_fft(wave, title):
+    # FFTを計算
+    fft_result = np.fft.fft(wave)
+    freqs = np.fft.fftfreq(len(wave), 1/sample_rate)
+    
+    # 1Hz以上の部分のみを表示
+    plt.figure(figsize=(10, 4))
+    plt.plot(freqs[:len(freqs)//2], np.abs(fft_result)[:len(freqs)//2])  # 正の周波数のみ
+    plt.title(f"FFT of {title}")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Amplitude")
+    plt.grid(True)
+    plt.show()
+
+# 再生したい音を順番に再生
+def play_all_waves():
+    # サイン波の重ね合わせ
+    ipd.display(ipd.Audio("/content/combined_sine_waves.wav"))
+    plot_fft(combined_wave, "Combined Sine Waves")
+
+    # ノコギリ波
+    ipd.display(ipd.Audio("/content/sawtooth_wave.wav"))
+    plot_fft(saw_wave, "Sawtooth Wave")
+
+    # 矩形波
+    ipd.display(ipd.Audio("/content/square_wave.wav"))
+    plot_fft(square_wave_signal, "Square Wave")
+
+    # 三角波
+    ipd.display(ipd.Audio("/content/triangle_wave.wav"))
+    plot_fft(triangle_wave_signal, "Triangle Wave")
+
+    # 白色雑音
+    ipd.display(ipd.Audio("/content/white_noise.wav"))
+    plot_fft(noise, "White Noise")
+
+    # 電子音
+    ipd.display(ipd.Audio("/content/electronic_sound.wav"))
+    plot_fft(electronic, "Electronic Sound")
+
+# すべての波形を再生
+play_all_waves()
