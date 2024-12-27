@@ -1,0 +1,50 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 0.5  # 各音の持続時間 (秒)
+
+# 音名と周波数の対応 (12平均律)
+note_frequencies = {
+    "C4": 261.63,  # ド
+    "D4": 293.66,  # レ
+    "E4": 329.63,  # ミ
+    "F4": 349.23,  # ファ
+    "G4": 392.00,  # ソ
+    "A4": 440.00,  # ラ
+    "B4": 493.88,  # シ
+    "C5": 523.25,  # ド（1オクターブ上）
+    "D5": 587.33,  # レ（1オクターブ上）
+    "E5": 659.26,  # ミ（1オクターブ上）
+    "F5": 698.46,  # ファ（1オクターブ上）
+    "G5": 783.99   # ソ（1オクターブ上）
+}
+
+# かえるのうたのメロディー (音名)
+# コメントにはメロディーの歌詞対応も追加
+melody_notes = [
+    "C4", "D4", "E4", "F4",  # かえるのうたが
+    "E4", "D4", "C4", None,  # 聞こえてくるよ (None は休符)
+    "E4", "F4", "G4", None,  # グワッ グワッ グワッ グワッ
+    "E4", "F4", "G4", None   # グワッ グワッ グワッ グワッ
+]
+
+# 波形生成関数
+def generate_wave(frequency, duration, sampling_rate):
+    if frequency is None:  # 休符の場合はゼロ波形を返す
+        return np.zeros(int(sampling_rate * duration))
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    return 0.5 * np.sin(2 * np.pi * frequency * t)  # 音量を0.5に設定
+
+# メロディー全体の波形を生成
+melody_wave = np.concatenate([generate_wave(note_frequencies.get(note), duration, sampling_rate) for note in melody_notes])
+
+# WAVファイルに保存
+output_file = "kaeru_no_uta.wav"
+write(output_file, sampling_rate, (melody_wave * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
