@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ギターの基準周波数（6弦のE2）
+string_frequencies = {
+    "E2": 82.41,  # 6弦
+    "A2": 110.00, # 5弦
+    "D3": 146.83, # 4弦
+    "G3": 196.00, # 3弦
+    "B3": 246.94, # 2弦
+    "E4": 329.63  # 1弦
+}
+
+# 半音間の比率
+semitone_ratio = 2 ** (1 / 12)
+
+# フレットごとの周波数を計算
+def calculate_frequencies(base_frequency, num_frets=20):
+    return [base_frequency * (semitone_ratio ** fret) for fret in range(num_frets + 1)]
+
+# 全弦のフレットごとの周波数を計算
+frequencies = {string: calculate_frequencies(freq) for string, freq in string_frequencies.items()}
+
+# プロット
+def plot_guitar_frets(frequencies, num_frets=20):
+    plt.figure(figsize=(12, 6))
+    for i, (string, freqs) in enumerate(frequencies.items()):
+        plt.plot(range(num_frets + 1), freqs, marker='o', label=f"{string} (String {6-i})")
+    plt.title("Guitar String Frequencies (1st to 20th Frets)")
+    plt.xlabel("Fret Number")
+    plt.ylabel("Frequency (Hz)")
+    plt.xticks(range(num_frets + 1))
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+# 実行
+plot_guitar_frets(frequencies)
