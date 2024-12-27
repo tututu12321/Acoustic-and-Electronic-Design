@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 基本の周波数（例えばA4の音 440Hz）
+base_frequency = 440
+
+# サンプルレート（通常44100Hz）
+sample_rate = 44100
+
+# 時間軸の生成（1秒間のデータを作成）
+t = np.linspace(0, 1, sample_rate)
+
+# サイン波を生成する関数
+def generate_sine_wave(frequency, sample_rate, duration=1):
+    return np.sin(2 * np.pi * frequency * t)
+
+# 各周波数のサイン波を生成
+sine_wave_base = generate_sine_wave(base_frequency, sample_rate)
+sine_wave_octave_up = generate_sine_wave(base_frequency * 2, sample_rate)
+sine_wave_octave_down = generate_sine_wave(base_frequency / 2, sample_rate)
+sine_wave_decade_up = generate_sine_wave(base_frequency * 10, sample_rate)
+sine_wave_decade_down = generate_sine_wave(base_frequency / 10, sample_rate)
+
+# オクターブとディケードの周波数
+frequencies = [base_frequency, base_frequency * 2, base_frequency / 2, base_frequency * 10, base_frequency / 10]
+labels = ['Base (440Hz)', 'Octave Up (880Hz)', 'Octave Down (220Hz)', 'Decade Up (4400Hz)', 'Decade Down (44Hz)']
+
+# プロット
+plt.figure(figsize=(12, 8))
+
+# サイン波のプロット
+plt.subplot(3, 1, 1)
+plt.plot(t[:1000], sine_wave_base[:1000], label='Base Frequency (440Hz)')
+plt.title('Base Frequency (440Hz) - Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+
+plt.subplot(3, 1, 2)
+plt.plot(t[:1000], sine_wave_octave_up[:1000], label='Octave Up (880Hz)', color='g')
+plt.title('Octave Up (880Hz) - Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+
+plt.subplot(3, 1, 3)
+plt.plot(t[:1000], sine_wave_decade_up[:1000], label='Decade Up (4400Hz)', color='r')
+plt.title('Decade Up (4400Hz) - Sine Wave')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+
+# サイン波のプロットを表示
+plt.tight_layout()
+plt.show()
+
+# 周波数ごとのグラフ
+plt.figure(figsize=(10, 6))
+plt.plot(frequencies, [np.max(sine_wave_base), np.max(sine_wave_octave_up), np.max(sine_wave_octave_down),
+                       np.max(sine_wave_decade_up), np.max(sine_wave_decade_down)], 'bo-', label='Max Amplitude')
+plt.title('Max Amplitude of Sine Waves at Different Frequencies')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Max Amplitude')
+plt.grid(True)
+plt.show()
