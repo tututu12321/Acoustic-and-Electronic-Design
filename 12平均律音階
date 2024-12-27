@@ -1,9 +1,11 @@
-```Python
 import numpy as np
+import matplotlib.pyplot as plt
 
 # 基準となるA4の周波数
 A4_frequency = 440.0  # Hz
-semitone_ratio = 2 ** (1/12)  # 半音間の比率
+semitone_ratio = 2 ** (1 / 12)  # 半音間の比率
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 1  # 各音の持続時間 (秒)
 
 # 12平均律音階の生成
 def equal_temperament_scale(base_freq, num_octaves=1):
@@ -23,4 +25,53 @@ scale_frequencies = equal_temperament_scale(A4_frequency, num_octaves=1)
 # 結果表示
 for note, freq in scale_frequencies:
     print(f"{note}: {freq} Hz")
-```
+
+# プロット用のデータ
+notes = [note for note, freq in scale_frequencies]
+frequencies = [freq for note, freq in scale_frequencies]
+
+# 周波数プロット
+plt.figure(figsize=(10, 6))
+plt.bar(notes, frequencies, color='skyblue')
+plt.title("Frequencies of Equal Temperament Scale", fontsize=16)
+plt.xlabel("Notes", fontsize=14)
+plt.ylabel("Frequency (Hz)", fontsize=14)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+# 各音の正弦波を合成
+t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+combined_wave = np.zeros_like(t)
+
+for note, freq in scale_frequencies:
+    wave = np.sin(2 * np.pi * freq * t)
+    combined_wave += wave
+
+# FFTによる周波数解析
+fft_result = np.fft.fft(combined_wave)
+frequencies_fft = np.fft.fftfreq(len(t), d=1 / sampling_rate)
+
+# 正の周波数のみ取得
+positive_freqs = frequencies_fft[:len(frequencies_fft) // 2]
+positive_fft_result = np.abs(fft_result[:len(fft_result) // 2])
+
+# 波形プロット
+plt.figure(figsize=(10, 6))
+plt.plot(t[:1000], combined_wave[:1000], color='purple')
+plt.title("Combined Waveform (First 1000 Samples)", fontsize=16)
+plt.xlabel("Time (s)", fontsize=14)
+plt.ylabel("Amplitude", fontsize=14)
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+# FFTプロット
+plt.figure(figsize=(10, 6))
+plt.plot(positive_freqs, positive_fft_result, color='orange')
+plt.title("FFT of Combined Waveform", fontsize=16)
+plt.xlabel("Frequency (Hz)", fontsize=14)
+plt.ylabel("Amplitude", fontsize=14)
+plt.grid()
+plt.tight_layout()
+plt.show()
