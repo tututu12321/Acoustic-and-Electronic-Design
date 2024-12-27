@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
+import scipy.io.wavfile as wav
+from IPython.display import Audio
+
+# 1. 矩形波の生成 (Generate a square wave signal)
+fs = 500  # サンプリング周波数 (Sampling frequency)
+t = np.linspace(0, 4, 4 * fs, endpoint=False)  # 4秒間の時間ベクトル (Time vector for 4 seconds)
+square_wave = np.sign(np.sin(2 * np.pi * 1 * t))  # 1Hzの矩形波 (1 Hz square wave)
+
+# 2. ローパスフィルタの定義 (Define the low-pass filter)
+def butter_lowpass(cutoff, fs, order=1):
+    nyquist = 0.5 * fs  # ナイキスト周波数 (Nyquist frequency)
+    normal_cutoff = cutoff / nyquist  # 正規化されたカットオフ周波数 (Normalized cutoff frequency)
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)  # バターワースフィルタ (Butterworth filter)
+    return b, a
+
+# 3. ハイパスフィルタの定義 (Define the high-pass filter)
+def butter_highpass(cutoff, fs, order=1):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='high', analog=False)
+    return b, a
+
+# フィルタ設定 (Filter settings)
+low_cutoff = 2  # ローパスフィルタのカットオフ周波数 (Low-pass cutoff frequency)
+high_cutoff = 2  # ハイパスフィルタのカットオフ周波数 (High-pass cutoff frequency)
+
+# ローパスとハイパスフィルタを設定 (Set up the low-pass and high-pass filters)
+b_low, a_low = butter_lowpass(low_cutoff, fs, order=1)
+b_high, a_high = butter_highpass(high_cutoff, fs, order=1)
+
+# 4. フィルタ適用 (Apply the filters)
+low_passed_signal = lfilter(b_low, a_low, square_wave)  # ローパスフィルタ後の信号 (Signal after low-pass filter)
+high_passed_signal = lfilter(b_high, a_high, square_wave)  # ハイパスフィルタ後の信号 (Signal after high-pass filter)
+
+# 5. 過渡現象のプロット (Plot the transient response)
+plt.figure(figsize=(10, 6))
+plt.subplot(3, 1, 1)
+plt.plot(t, square_wave, label="Input Square Wave")
+plt.title('Input Square Wave Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+
+plt.subplot(3, 1, 2)
+plt.plot(t, low_passed_signal, label="Low-pass Filtered Signal", color='g')
+plt.title('Low-pass Filtered Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+
+plt.subplot(3, 1, 3)
+plt.plot(t, high_passed_signal, label="High-pass Filtered Signal", color='r')
+plt.title('High-pass Filtered Signal')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+
+plt.tight_layout()
+plt.show()
+
+# 6. FFTの計算 (Compute FFT of the signals)
+def plot_fft(signal, fs, label, subplot_position):
+    N = len(signal)
+    fft_signal = np.fft.fft(signal)  # FFTを計算 (Calculate the FFT)
+    freqs = np.fft.fftfreq(N, 1/fs)  # 周波数軸 (Frequency axis)
+    plt.subplot(3, 1, subplot_position)
+    plt.plot(freqs[:N // 2], np.abs(fft_signal)[:N // 2], label=label)  # 正の周波数のみプロット (Plot only positive frequencies)
+    plt.title(f'FFT of {label}')
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Magnitude')
+    plt.legend()
+    plt.grid(True)
+
+# 7. 個別のFFTプロット (Separate FFT plots)
+plt.figure(figsize=(10, 6))
+plot_fft(square_wave, fs, "Input Square Wave", 1)
+plot_fft(low_passed_signal, fs, "Low-pass Filtered Signal", 2)
+plot_fft(high_passed_signal, fs, "High-pass Filtered Signal", 3)
+plt.tight_layout()
+plt.show()
+
+# 8. 音声ファイルに保存 (Save the filtered signals as audio files)
+wav.write('/content/low_passed_signal.wav', fs, np.int16(low_passed_signal / np.max(np.abs(low_passed_signal)) * 32767))  # ローパスフィルタ後の信号を保存 (Save the low-pass filtered signal)
+wav.write('/content/high_passed_signal.wav', fs, np.int16(high_passed_signal / np.max(np.abs(high_passed_signal)) * 32767))  # ハイパスフィルタ後の信号を保存 (Save the high-pass filtered signal)
+
+# 9. 音声再生 (Play the filtered signals)
+print("Playing low-pass filtered signal:")
+Audio('/content/low_passed_signal.wav')  # Google Colabでローパスフィルタ後の音声を再生 (Play the low-pass filtered audio in Google Colab)
