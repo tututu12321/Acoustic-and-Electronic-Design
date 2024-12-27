@@ -1,0 +1,68 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 1.0  # 各コードの持続時間 (秒)
+rest_duration = 0.2  # コード間の休符 (秒)
+
+# 音名と周波数の対応 (12平均律)
+note_frequencies = {
+    "E2": 82.41, "F2": 87.31, "F#2": 92.50, "G2": 98.00, "G#2": 103.83,
+    "A2": 110.00, "A#2": 116.54, "B2": 123.47, "C3": 130.81, "C#3": 138.59,
+    "D3": 146.83, "D#3": 155.56, "E3": 164.81, "F3": 174.61, "F#3": 185.00,
+    "G3": 196.00, "G#3": 207.65, "A3": 220.00, "A#3": 233.08, "B3": 246.94,
+    "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63
+}
+
+# コードの定義（構成音）
+chords = {
+    "C": ["C3", "E3", "G3", "C4"],      # Cメジャー
+    "Em": ["E2", "G3", "B3", "E4"],     # Em
+    "A": ["A2", "C#3", "E3", "A3"],     # Aメジャー
+    "Am": ["A2", "C3", "E3", "A3"],     # Am
+    "D": ["D3", "F#3", "A3", "D4"],     # Dメジャー
+    "Dm": ["D3", "F3", "A3", "D4"],     # Dm
+    "G": ["G2", "B2", "D3", "G3"],      # Gメジャー
+    "Bm": ["B2", "D3", "F#3", "B3"],    # Bm
+    "F": ["F2", "A2", "C3", "F3"],      # F
+    "F#m": ["F#2", "A2", "C#3", "F#3"]  # F#m
+}
+
+# 波形生成関数（ギター風）
+def generate_guitar_wave(frequencies, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+
+    # 基本波 + 倍音
+    for freq in frequencies:
+        wave += 0.6 * np.sin(2 * np.pi * freq * t)  # 基本波
+        wave += 0.3 * np.sin(2 * np.pi * 2 * freq * t)  # 2倍音
+        wave += 0.1 * np.sin(2 * np.pi * 3 * freq * t)  # 3倍音
+
+    # エンベロープ（アタックと減衰）
+    envelope = np.exp(-3 * t)  # 減衰
+    wave *= envelope
+
+    # 正規化
+    return wave / np.max(np.abs(wave))
+
+# 全コードの波形を生成
+progression = ["C", "Em", "A", "Am", "D", "Dm", "G", "Bm", "F", "F#m"]
+waveform = []
+for chord in progression:
+    wave = generate_guitar_wave([note_frequencies[note] for note in chords[chord]], duration, sampling_rate)
+    waveform.append(wave)
+    waveform.append(np.zeros(int(rest_duration * sampling_rate)))  # 休符
+
+# 波形を結合
+combined_wave = np.concatenate(waveform)
+
+# WAVファイルに保存
+output_file = "open_and_barre_chords.wav"
+write(output_file, sampling_rate, (combined_wave * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
