@@ -1,0 +1,63 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import IPython.display as ipd
+from scipy.io.wavfile import write
+
+# サンプルレート（44.1kHz = CD品質）
+sample_rate = 44100
+
+# 時間軸の生成（1秒間）
+t = np.linspace(0, 1, sample_rate, endpoint=False)
+
+# 音の周波数（ここでは440Hz、A4の音）
+frequency = 440  # Hz
+
+# サイン波の生成（音響合成）
+def generate_sine_wave(frequency, duration=1, sample_rate=44100):
+    t = np.linspace(0, duration, sample_rate, endpoint=False)
+    return np.sin(2 * np.pi * frequency * t)
+
+# PCM音源の生成（量子化ビット数を16ビットに設定）
+def generate_pcm_wave(frequency, duration=1, sample_rate=44100, bit_depth=16):
+    wave = generate_sine_wave(frequency, duration, sample_rate)
+    # 量子化: サンプルを指定されたビット数に丸める
+    max_val = 2**(bit_depth - 1) - 1
+    quantized_wave = np.int16(wave * max_val)  # サンプル値を-32768～32767の範囲に変換
+    return quantized_wave
+
+# サンプル音を生成
+sine_wave = generate_sine_wave(frequency)
+pcm_wave = generate_pcm_wave(frequency)
+
+# PCM音源をWAVファイルとして保存
+write("/content/pcm_wave.wav", sample_rate, pcm_wave)
+
+# プロット: 音波形の確認
+plt.figure(figsize=(10, 4))
+plt.plot(t[:1000], sine_wave[:1000])  # 最初の1000サンプル
+plt.title("Sine Wave (440 Hz)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.show()
+
+# 音の再生
+ipd.display(ipd.Audio("/content/pcm_wave.wav"))
+
+# 圧縮音源: 簡単な圧縮シミュレーション（ダウンサンプリング）
+def downsample_wave(wave, factor=2):
+    # ダウンサンプリング：サンプルレートを半分にする
+    return wave[::factor]
+
+# 圧縮音源を生成
+compressed_pcm_wave = downsample_wave(pcm_wave, factor=2)
+
+# 圧縮音源をWAVファイルとして保存
+write("/content/compressed_pcm_wave.wav", sample_rate // 2, compressed_pcm_wave)
+
+# 圧縮音源の再生
+ipd.display(ipd.Audio("/content/compressed_pcm_wave.wav"))
+
+# 非圧縮音源と圧縮音源を比較
+print("Original PCM Wave Length:", len(pcm_wave))
+print("Compressed PCM Wave Length:", len(compressed_pcm_wave))
