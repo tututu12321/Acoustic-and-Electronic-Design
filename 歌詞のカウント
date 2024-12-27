@@ -1,0 +1,41 @@
+from collections import Counter
+import matplotlib.pyplot as plt
+
+# Lyrics data
+lyrics = """
+Medaka no gakkou wa kawa no naka
+Sotto nozoite mite goran
+Sotto nozoite mite goran
+Minna de oyugi shite iru yo
+
+Medaka no gakkou no medaka-tachi
+Dare ga seito ka sensei ka
+Dare ga seito ka sensei ka
+Minna de genki ni asonderu
+
+Medaka no gakkou wa ureshisou
+Mizu ni nagarete tsui-tsui
+Mizu ni nagarete tsui-tsui
+Minna ga sorotte tsui-tsui
+"""
+
+# Split the lyrics into words
+words = lyrics.split()
+
+# Count word frequency
+word_counts = Counter(words)
+
+# Display results
+print("Word Frequency:")
+for word, count in word_counts.items():
+    print(f"{word}: {count}")
+
+# Visualize results with a bar chart
+plt.figure(figsize=(10, 6))
+plt.bar(word_counts.keys(), word_counts.values(), color='skyblue')
+plt.xlabel("Words")
+plt.ylabel("Frequency")
+plt.title("Word Frequency in 'Medaka no Gakkou'")
+plt.xticks(rotation=45, ha='right', fontsize=10)
+plt.tight_layout()
+plt.show()
