@@ -1,0 +1,60 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 0.5  # 各音の持続時間 (秒)
+rest_duration = 0.1  # 休符の持続時間 (秒)
+
+# 音名と周波数の対応（12平均律）
+note_frequencies = {
+    "C": 261.63,  # ド
+    "C#": 277.18, # ド＃
+    "D": 293.66,  # レ
+    "D#": 311.13, # レ＃
+    "E": 329.63,  # ミ
+    "F": 349.23,  # ファ
+    "F#": 369.99, # ファ＃
+    "G": 392.00,  # ソ
+    "G#": 415.30, # ソ＃
+    "A": 440.00,  # ラ
+    "A#": 466.16, # ラ＃
+    "B": 493.88   # シ
+}
+
+# イタリア語と英語の対応表
+italian_to_english = {
+    "ド": "C", "ド＃": "C#", "レ": "D", "レ＃": "D#", 
+    "ミ": "E", "ファ": "F", "ファ＃": "F#", 
+    "ソ": "G", "ソ＃": "G#", "ラ": "A", "ラ＃": "A#", "シ": "B"
+}
+
+# 波形生成関数
+def generate_wave(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * frequency * t)  # 音量を0.5に設定
+    return wave
+
+# 休符波形生成
+def generate_rest(duration, sampling_rate):
+    return np.zeros(int(sampling_rate * duration))
+
+# 順番に音を鳴らす波形を生成
+waveform = []
+for italian_note, english_note in italian_to_english.items():
+    freq = note_frequencies[english_note]
+    wave = generate_wave(freq, duration, sampling_rate)
+    waveform.append(wave)
+    waveform.append(generate_rest(rest_duration, sampling_rate))
+
+# 波形を結合
+combined_wave = np.concatenate(waveform)
+
+# WAVファイルに保存
+output_file = "italian_to_english_scale.wav"
+write(output_file, sampling_rate, (combined_wave * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
