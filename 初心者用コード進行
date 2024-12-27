@@ -1,0 +1,66 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 1.0  # 各コードの持続時間 (秒)
+
+# 音名と周波数の対応 (12平均律)
+note_frequencies = {
+    "C3": 130.81, "C#3": 138.59, "D3": 146.83, "D#3": 155.56, "E3": 164.81,
+    "F3": 174.61, "F#3": 185.00, "G3": 196.00, "G#3": 207.65, "A3": 220.00, "A#3": 233.08, "B3": 246.94,
+    "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63,
+    "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88
+}
+
+# コードの定義
+chords = {
+    "C": ["C3", "E3", "G3"],          # C
+    "D": ["D3", "F#3", "A3"],        # D
+    "Dm": ["D3", "F3", "A3"],        # Dm
+    "E": ["E3", "G#3", "B3"],        # E
+    "Em": ["E3", "G3", "B3"],        # Em
+    "F": ["F3", "A3", "C4"],         # F
+    "G": ["G3", "B3", "D4"],         # G
+    "A": ["A3", "C#4", "E4"],        # A
+    "Am": ["A3", "C4", "E4"],        # Am
+    "Bm7": ["B3", "D4", "F#4", "A4"] # Bm7
+}
+
+# 波形生成関数（ギター風）
+def generate_guitar_wave(frequencies, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+
+    # 基本波 + 倍音
+    for freq in frequencies:
+        wave += 0.6 * np.sin(2 * np.pi * freq * t)  # 基本波
+        wave += 0.3 * np.sin(2 * np.pi * 2 * freq * t)  # 2倍音
+        wave += 0.1 * np.sin(2 * np.pi * 3 * freq * t)  # 3倍音
+
+    # エンベロープ（アタックと減衰）
+    envelope = np.exp(-3 * t)  # アタックと減衰を再現
+    wave *= envelope
+
+    # 正規化
+    return wave / np.max(np.abs(wave))
+
+# コードの波形を生成
+def generate_chord_wave(chord, duration, sampling_rate):
+    return generate_guitar_wave([note_frequencies[note] for note in chord], duration, sampling_rate)
+
+# 全体の波形を生成
+progression = ["C", "D", "Dm", "E", "Em", "F", "G", "A", "Am", "Bm7"]
+waveform = np.concatenate([
+    generate_chord_wave(chords[chord], duration, sampling_rate)
+    for chord in progression
+])
+
+# WAVファイルに保存
+output_file = "beginner_chords_guitar_style.wav"
+write(output_file, sampling_rate, (waveform * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
