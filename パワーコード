@@ -1,0 +1,65 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+tempo = 100  # テンポ (BPM)
+beat_duration = 60 / tempo  # 1拍の持続時間 (秒)
+
+# 音名と周波数の対応 (12平均律)
+note_frequencies = {
+    "E2": 82.41,  # 6弦開放 (E2)
+    "B2": 123.47, # B2
+    "A2": 110.00, # 5弦開放 (A2)
+    "E3": 164.81, # E3
+    "G2": 98.00,  # G2
+    "D3": 146.83, # D3
+    "C3": 130.81, # C3
+    "G3": 196.00  # G3
+}
+
+# パワーコードの構成 (ルート音 + 完全5度)
+power_chords = {
+    "E": ["E2", "B2"],   # Eパワーコード
+    "A": ["A2", "E3"],   # Aパワーコード
+    "G": ["G2", "D3"],   # Gパワーコード
+    "C": ["C3", "G3"],   # Cパワーコード
+}
+
+# 波形生成関数（ギター風）
+def generate_guitar_wave(frequencies, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+
+    # 基本波 + 倍音
+    for freq in frequencies:
+        wave += 0.6 * np.sin(2 * np.pi * freq * t)  # 基本波
+        wave += 0.3 * np.sin(2 * np.pi * 2 * freq * t)  # 2倍音
+        wave += 0.1 * np.sin(2 * np.pi * 3 * freq * t)  # 3倍音
+
+    # エンベロープ（アタックと減衰）
+    envelope = np.exp(-3 * t)  # 減衰
+    wave *= envelope
+
+    # 正規化
+    return wave / np.max(np.abs(wave))
+
+# パワーコードの波形を生成
+def generate_chord_wave(chord_name, duration, sampling_rate):
+    frequencies = [note_frequencies[note] for note in power_chords[chord_name]]
+    return generate_guitar_wave(frequencies, duration, sampling_rate)
+
+# コード進行を生成 (E → A → G → C → E)
+progression = ["E", "A", "G", "C", "E"]
+waveform = np.concatenate([
+    generate_chord_wave(chord, beat_duration, sampling_rate) for chord in progression
+])
+
+# WAVファイルに保存
+output_file = "power_chords_tempo100.wav"
+write(output_file, sampling_rate, (waveform * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
