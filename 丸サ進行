@@ -1,0 +1,96 @@
+import numpy as np
+from scipy.io.wavfile import write
+from google.colab import files
+import matplotlib.pyplot as plt
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 1.0  # 各コードの持続時間 (秒)
+rest_duration = 0.001  # 休符の持続時間 (秒)
+
+# 音名と周波数の対応 (12平均律)
+note_frequencies = {
+    "C3": 130.81, "C#3": 138.59, "D3": 146.83, "D#3": 155.56, "E3": 164.81,
+    "F3": 174.61, "F#3": 185.00, "G3": 196.00, "G#3": 207.65, "A3": 220.00, "A#3": 233.08, "B3": 246.94,
+    "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63,
+    "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88
+}
+
+# コードの定義
+chords = {
+    "DbM7": ["C#3", "F3", "G#3", "C4"],  # Dbメジャー7
+    "C7": ["C3", "E3", "G3", "A#3"],     # Cドミナント7
+    "Fm7": ["F3", "G#3", "C4", "D#4"],   # Fマイナー7
+    "Ebm7": ["D#3", "F#3", "A#3", "C#4"], # Ebマイナー7
+    "Ab7": ["G#3", "C4", "D#4", "F4"]    # Abドミナント7
+}
+
+# 波形生成関数 (ギター風に倍音とエンベロープを加える)
+def generate_guitar_wave(frequencies, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+
+    # 基本波 + 倍音
+    for freq in frequencies:
+        wave += 0.6 * np.sin(2 * np.pi * freq * t)  # 基本波
+        wave += 0.3 * np.sin(2 * np.pi * 2 * freq * t)  # 2倍音
+        wave += 0.1 * np.sin(2 * np.pi * 3 * freq * t)  # 3倍音
+
+    # エンベロープ（アタックと減衰）
+    envelope = np.exp(-3 * t)  # 減衰
+    wave *= envelope
+
+    # 正規化
+    return wave / np.max(np.abs(wave))
+
+# 休符波形を生成
+def generate_rest(duration, sampling_rate):
+    return np.zeros(int(sampling_rate * duration))
+
+# コード進行の波形を生成 (休符を含む丸サ進行を繰り返し)
+progression = [
+    ("DbM7", duration),
+    ("C7", duration),
+    ("Fm7", duration),
+    ("Ebm7", duration),
+    (None, rest_duration),  # Ebm7 → 休符
+    ("Ab7", duration),
+    (None, rest_duration),  # Ab7 → 休符
+]
+progression *= 4  # 4回繰り返し
+
+waveform = np.concatenate([
+    generate_guitar_wave([note_frequencies[note] for note in chords[chord]], dur, sampling_rate)
+    if chord else generate_rest(dur, sampling_rate)
+    for chord, dur in progression
+])
+
+# 波形をWAVファイルに保存
+output_file = "marusa_progression_with_rest.wav"
+write(output_file, sampling_rate, (waveform * 32767).astype(np.int16))
+print(f"WAVファイルを保存しました: {output_file}")
+
+# Google Colab からダウンロード
+files.download(output_file)
+
+# 波形をプロット
+plt.figure(figsize=(12, 4))
+plt.plot(waveform[:2000])  # 最初の2000サンプルをプロット
+plt.title("Waveform (First 2000 Samples)")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# FFT (高速フーリエ変換) を計算してプロット
+fft_spectrum = np.fft.fft(waveform)
+frequencies = np.fft.fftfreq(len(fft_spectrum), d=1/sampling_rate)
+magnitude = np.abs(fft_spectrum)
+
+plt.figure(figsize=(12, 4))
+plt.plot(frequencies[:len(frequencies)//2], magnitude[:len(magnitude)//2])  # 正の周波数成分のみ
+plt.title("FFT Spectrum")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.grid()
+plt.show()
