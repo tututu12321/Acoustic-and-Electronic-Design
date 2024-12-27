@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+from google.colab import files
+
+# サンプリング設定
+sampling_rate = 44100  # サンプリング周波数 (44.1 kHz)
+duration = 1.0  # 各音の持続時間 (秒)
+
+# 基準周波数
+base_frequency = 440.0  # A4 (440Hz)
+
+# 音域（トレブル、ミドル、ベース）の設定
+treble_freq = base_frequency * 4  # 高音域 (倍音)
+middle_freq = base_frequency      # 中音域
+bass_freq = base_frequency / 2    # 低音域
+
+# 波形生成関数
+def generate_wave(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = 0.5 * np.sin(2 * np.pi * frequency * t)
+    return wave
+
+# リバーブエフェクトの簡易実装
+def apply_reverb(wave, decay=0.5, delay=0.05, sampling_rate=44100):
+    delay_samples = int(delay * sampling_rate)
+    reverb_wave = np.zeros(len(wave) + delay_samples)
+    reverb_wave[:len(wave)] = wave
+    reverb_wave[delay_samples:] += decay * wave
+    return reverb_wave[:len(wave)]  # 元の長さに調整
+
+# 各音域の波形を生成
+treble_wave = generate_wave(treble_freq, duration, sampling_rate)
+middle_wave = generate_wave(middle_freq, duration, sampling_rate)
+bass_wave = generate_wave(bass_freq, duration, sampling_rate)
+
+# リバーブ適用
+reverb_wave = apply_reverb(middle_wave)
+
+# 波形をプロット
+plt.figure(figsize=(10, 6))
+plt.subplot(4, 1, 1)
+plt.plot(treble_wave[:1000], label="Treble")
+plt.title("Treble")
+plt.grid()
+
+plt.subplot(4, 1, 2)
+plt.plot(middle_wave[:1000], label="Middle", color="orange")
+plt.title("Middle")
+plt.grid()
+
+plt.subplot(4, 1, 3)
+plt.plot(bass_wave[:1000], label="Bass", color="green")
+plt.title("Bass")
+plt.grid()
+
+plt.subplot(4, 1, 4)
+plt.plot(reverb_wave[:1000], label="Reverb", color="purple")
+plt.title("Reverb")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+# 各音をWAVファイルに保存し順々に再生
+waveforms = {"Treble": treble_wave, "Middle": middle_wave, "Bass": bass_wave, "Reverb": reverb_wave}
+for name, wave in waveforms.items():
+    filename = f"{name.lower()}.wav"
+    write(filename, sampling_rate, (wave * 32767).astype(np.int16))
+    print(f"{name}のWAVファイルを保存しました: {filename}")
+    files.download(filename)
