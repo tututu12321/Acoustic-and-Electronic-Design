@@ -1,0 +1,67 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.io.wavfile as wav
+from IPython.display import Audio
+from google.colab import files  # ダウンロード用モジュールのインポート
+
+# 1. サイン波の生成 (Generate a sine wave)
+fs = 5000  # サンプリング周波数 (Sampling frequency)
+t = np.linspace(0, 2, 2 * fs, endpoint=False)  # 2秒間の時間ベクトル (Time vector for 2 seconds)
+frequency = 440  # サイン波の周波数 (Frequency of sine wave)
+sine_wave = np.sin(2 * np.pi * frequency * t)  # サイン波の生成 (Generate the sine wave)
+
+# 2. ディストーションの適用 (Apply distortion: Clipping the sine wave)
+def apply_distortion(signal, threshold=0.5):
+    # ディストーション (Clipping the signal)
+    distorted_signal = np.clip(signal, -threshold, threshold)  # サイン波の値をクリップ (Clip the sine wave values)
+    return distorted_signal  # クリップされた信号を返す (Return the clipped signal)
+
+# 3. ディストーション波形 (Distorted waveform)
+distorted_wave = apply_distortion(sine_wave, threshold=0.5)  # ディストーションを適用 (Apply distortion to the sine wave)
+
+# 4. 音声ファイルに保存 (Save both signals as .wav files)
+sine_file = '/content/sine_wave.wav'  # サイン波のファイル名 (Sine wave file name)
+distorted_file = '/content/distorted_wave.wav'  # ディストーション波のファイル名 (Distorted wave file name)
+
+# サイン波を保存 (Save the sine wave)
+wav.write(sine_file, fs, np.int16(sine_wave / np.max(np.abs(sine_wave)) * 32767))  # サイン波を保存 (Save the sine wave)
+
+# ディストーション波を保存 (Save the distorted wave)
+wav.write(distorted_file, fs, np.int16(distorted_wave / np.max(np.abs(distorted_wave)) * 32767))  # ディストーション波を保存 (Save the distorted wave)
+
+# 5. サイン波とディストーション波形のプロット (Plot the sine wave and distorted waveform)
+plt.figure(figsize=(10, 6))  # プロットのサイズ (Set the figure size)
+
+# サイン波のプロット (Plot the sine wave)
+plt.subplot(2, 1, 1)
+plt.plot(t, sine_wave, label="Input Sine Wave", color='b')  # サイン波を青色でプロット (Plot sine wave in blue)
+plt.title("Input Sine Wave")  # タイトル (Title)
+plt.xlabel("Time [s]")  # x軸ラベル (x-axis label)
+plt.ylabel("Amplitude")  # y軸ラベル (y-axis label)
+plt.grid(True)  # グリッドを表示 (Display grid)
+
+# ディストーション波のプロット (Plot the distorted wave)
+plt.subplot(2, 1, 2)
+plt.plot(t, distorted_wave, label="Distorted Wave", color='r')  # ディストーション波を赤色でプロット (Plot distorted wave in red)
+plt.title("Distorted Waveform (Clipped)")  # タイトル (Title)
+plt.xlabel("Time [s]")  # x軸ラベル (x-axis label)
+plt.ylabel("Amplitude")  # y軸ラベル (y-axis label)
+plt.grid(True)  # グリッドを表示 (Display grid)
+
+plt.tight_layout()  # レイアウトの調整 (Adjust layout)
+plt.show()  # プロットの表示 (Show the plot)
+
+# 6. 音声再生 (Play the sine wave)
+print("Playing original sine wave:")  # サイン波の再生開始メッセージ (Message before playing sine wave)
+audio_sine = Audio(sine_file)  # サイン波の音声ファイルを読み込む (Load the sine wave audio file)
+audio_sine  # サイン波の音声プレイヤーを表示 (Display the sine wave audio player)
+
+# ディストーション波の音声再生 (Play the distorted wave)
+print("Playing distorted wave:")  # ディストーション波の再生開始メッセージ (Message before playing distorted wave)
+audio_distorted = Audio(distorted_file)  # ディストーション波の音声ファイルを読み込む (Load the distorted wave audio file)
+audio_distorted  # ディストーション波の音声プレイヤーを表示 (Display the distorted wave audio player)
+
+# 7. 音声ファイルをダウンロード (Download audio files)
+print("Downloading sine wave and distorted wave files...")
+files.download(sine_file)  # サイン波ファイルをダウンロード (Download sine wave file)
+files.download(distorted_file)  # ディストーション波ファイルをダウンロード (Download distorted wave file)
