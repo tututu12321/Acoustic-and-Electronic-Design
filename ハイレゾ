@@ -1,0 +1,47 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# サンプルレート（CD品質とハイレゾ）
+cd_sample_rate = 44100  # CD品質 (44.1kHz)
+high_res_sample_rate = 96000  # ハイレゾ (96kHz)
+
+# 時間軸の生成（1秒間）
+t_cd = np.linspace(0, 1, cd_sample_rate, endpoint=False)
+t_hr = np.linspace(0, 1, high_res_sample_rate, endpoint=False)
+
+# 基本的なサイン波の生成関数
+def generate_sine_wave(frequency, sample_rate, duration=1):
+    t = np.linspace(0, duration, sample_rate, endpoint=False)
+    return np.sin(2 * np.pi * frequency * t)
+
+# CD品質とハイレゾのサイン波（440Hz）
+cd_wave = generate_sine_wave(440, cd_sample_rate)
+high_res_wave = generate_sine_wave(440, high_res_sample_rate)
+
+# プロット
+plt.figure(figsize=(14, 6))
+
+# CD品質の波形
+plt.subplot(2, 1, 1)
+plt.plot(t_cd[:1000], cd_wave[:1000])  # 最初の1000サンプルを表示
+plt.title("CD Quality (44.1kHz, 16-bit) - Sine Wave")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+
+# ハイレゾの波形
+plt.subplot(2, 1, 2)
+plt.plot(t_hr[:1000], high_res_wave[:1000])  # 最初の1000サンプルを表示
+plt.title("High-Resolution Audio (96kHz, 24-bit) - Sine Wave")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+# 数値的な違いを比較
+print(f"CD Quality Sample Rate: {cd_sample_rate} Hz")
+print(f"High-Resolution Sample Rate: {high_res_sample_rate} Hz")
+print(f"CD Wave Length: {len(cd_wave)} samples for 1 second")
+print(f"High-Res Wave Length: {len(high_res_wave)} samples for 1 second")
