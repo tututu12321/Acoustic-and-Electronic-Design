@@ -1,0 +1,33 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Frequencies (Hz)
+frequencies = np.array([31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000])
+
+# Sound pressure levels (dB) for different sound sources (sample data)
+sound_pressure_levels = {
+    "Quiet Room": [30, 30, 30, 30, 30, 30, 30, 30, 30, 30],  # Quiet room
+    "Conversation": [50, 55, 60, 65, 70, 75, 80, 85, 90, 95],  # General conversation
+    "Traffic Noise": [70, 75, 80, 85, 90, 95, 100, 105, 110, 115],  # Traffic noise
+    "Music": [60, 65, 70, 75, 80, 85, 90, 95, 100, 105]  # Music sound pressure
+}
+
+# Plotting setup
+plt.figure(figsize=(12, 6))
+
+# Plot the sound pressure levels for each sound source
+for label, data in sound_pressure_levels.items():
+    plt.plot(frequencies, data, label=label)
+
+# Set axis labels and title in English
+plt.xscale('log')  # Use logarithmic scale for x-axis
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Sound Pressure Level (dB)')
+plt.title('Sound Pressure Level vs Frequency for Different Sound Sources')
+
+# Display grid and legend
+plt.grid(True, which="both", ls="--")
+plt.legend(title="Sound Sources")
+
+# Show the plot
+plt.show()
