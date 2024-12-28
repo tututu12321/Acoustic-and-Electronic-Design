@@ -1,6 +1,7 @@
 import numpy as np
 from pydub import AudioSegment
 from pydub.generators import Sine
+from scipy.signal import butter, lfilter
 from IPython.display import Audio
 
 # サンプリングレートと周波数設定
@@ -90,6 +91,39 @@ def apply_amplifier(audio, amplification_factor=2):
     amplified_audio = np.clip(amplified_audio, -1, 1)
     return amplified_audio
 
+# マスターボリューム、トレブル、ミドル、ベースエフェクトの実装
+
+def apply_master_volume(audio, volume_factor=1.0):
+    """マスターボリュームエフェクト"""
+    return audio * volume_factor
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def bandpass_filter(audio, lowcut, highcut):
+    """バンドパスフィルターを適用してトレブル、ミドル、ベースを強調"""
+    b, a = butter_bandpass(lowcut, highcut, sampling_rate)
+    return lfilter(b, a, audio)
+
+def apply_treble(audio, gain=1.5):
+    """トレブルエフェクト（高音域）"""
+    filtered_audio = bandpass_filter(audio, 2000, 10000)  # 高音域フィルタリング
+    return filtered_audio * gain
+
+def apply_midrange(audio, gain=1.5):
+    """ミドルエフェクト（中音域）"""
+    filtered_audio = bandpass_filter(audio, 500, 2000)  # 中音域フィルタリング
+    return filtered_audio * gain
+
+def apply_bass(audio, gain=1.5):
+    """ベースエフェクト（低音域）"""
+    filtered_audio = bandpass_filter(audio, 20, 500)  # 低音域フィルタリング
+    return filtered_audio * gain
+
 # 各エフェクトを適用し、個別に保存して再生
 def apply_and_save_effects(audio, effect_name):
     """エフェクトを適用して、結果を保存する"""
@@ -118,6 +152,14 @@ def apply_and_save_effects(audio, effect_name):
         effect_audio = apply_noise_gate(audio)
     elif effect_name == "amplifier":
         effect_audio = apply_amplifier(audio)
+    elif effect_name == "master_volume":
+        effect_audio = apply_master_volume(audio)
+    elif effect_name == "treble":
+        effect_audio = apply_treble(audio)
+    elif effect_name == "midrange":
+        effect_audio = apply_midrange(audio)
+    elif effect_name == "bass":
+        effect_audio = apply_bass(audio)
 
     # 結果をAudioSegmentに変換
     effect_audio_segment = AudioSegment(
@@ -133,7 +175,8 @@ def apply_and_save_effects(audio, effect_name):
 # エフェクトを個別に適用して再生
 effects = [
     "overdrive", "wah_wah", "chorus", "pitch_shifter", "reverb", 
-    "compressor", "phaser", "plunger", "delay", "noise_gate", "amplifier"
+    "compressor", "phaser", "plunger", "delay", "noise_gate", 
+    "amplifier", "master_volume", "treble", "midrange", "bass"
 ]
 
 for effect in effects:
