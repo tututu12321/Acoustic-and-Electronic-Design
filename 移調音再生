@@ -1,0 +1,83 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートの設定
+sampling_rate = 44100
+
+# 基本的な音階の周波数（C4 - 4オクターブ目）
+note_frequencies = {
+    'C': 261.63,  # C4
+    'C#': 277.18, # C#4
+    'D': 293.66,  # D4
+    'D#': 311.13, # D#4
+    'E': 329.63,  # E4
+    'F': 349.23,  # F4
+    'F#': 369.99, # F#4
+    'G': 392.00,  # G4
+    'G#': 415.30, # G#4
+    'A': 440.00,  # A4
+    'A#': 466.16, # A#4
+    'B': 493.88,  # B4
+}
+
+# 音を生成する関数
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+# 音階の移調関数
+def transpose(note, semitones):
+    """指定された音（note）を指定された半音数（semitones）だけ移調"""
+    # 元の音の周波数を取得
+    frequency = note_frequencies[note]
+    
+    # 半音分だけ音程を変える
+    new_frequency = frequency * (2 ** (semitones / 12))  # 半音ごとに倍音程が変化
+    return new_frequency
+
+# 音を再生する関数
+def play_note_with_transposition(note, semitones, duration_seconds=0.5):
+    """指定された音を移調して再生"""
+    # 音を移調
+    transposed_frequency = transpose(note, semitones)
+    
+    # 移調後の音を生成
+    sine_wave = generate_sine_wave(transposed_frequency, duration_seconds, sampling_rate)
+    
+    # 音声に変換
+    audio_segment = AudioSegment(
+        (sine_wave * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    # 保存して再生
+    audio_segment.export(f"{note}_transposed.wav", format="wav")
+    return Audio(f"{note}_transposed.wav")
+
+# 実行例：原曲の音階Cを移調して再生
+def play_all_transpositions():
+    print("原曲の音階Cを移調して再生します:\n")
+    
+    # 元の音（C4）
+    note = 'C'
+    
+    # 例：Cから移調して他のキーに変換
+    # C -> D (2半音)
+    print("CからDに移調した音:")
+    display(play_note_with_transposition(note, 2))  # 2半音アップ（C -> D）
+    
+    # C -> E (4半音)
+    print("CからEに移調した音:")
+    display(play_note_with_transposition(note, 4))  # 4半音アップ（C -> E）
+    
+    # C -> F# (6半音)
+    print("CからF#に移調した音:")
+    display(play_note_with_transposition(note, 6))  # 6半音アップ（C -> F#）
+
+# すべての移調を再生
+play_all_transpositions()
