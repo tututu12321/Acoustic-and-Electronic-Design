@@ -1,0 +1,72 @@
+import numpy as np
+from scipy.io.wavfile import write
+import IPython.display as ipd
+import matplotlib.pyplot as plt
+
+# サンプリングレートと音の設定
+sampling_rate = 44100  # 44.1 kHz
+tempo = 120  # BPM
+beat_duration = 60 / tempo  # 1拍の長さ (秒)
+
+# ピアノ風の音を生成する関数
+def generate_piano_wave(freq, duration, amp=0.5):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    envelope = np.exp(-3 * t)  # 減衰エンベロープ
+    wave = amp * np.sin(2 * np.pi * freq * t) * envelope
+    return wave
+
+# コード進行「6545」の音符 (各コードの構成音)
+chords = [
+    [(440.00, beat_duration), (523.25, beat_duration), (659.25, beat_duration)],  # vi: A, C, E
+    [(349.23, beat_duration), (440.00, beat_duration), (523.25, beat_duration), (659.25, beat_duration)],  # IV△7: F, A, C, E
+    [(392.00, beat_duration), (493.88, beat_duration), (587.33, beat_duration)],  # V: G, B, D
+    [(349.23, beat_duration), (440.00, beat_duration), (523.25, beat_duration), (659.25, beat_duration)],  # IV△7: F, A, C, E
+]
+
+# 各コードを合成
+def generate_chord_progression(chords):
+    progression = np.array([])
+    for chord in chords:
+        chord_wave = np.zeros(int(sampling_rate * beat_duration))
+        for freq, duration in chord:
+            chord_wave += generate_piano_wave(freq, duration)
+        progression = np.concatenate((progression, chord_wave))
+    return progression
+
+progression = generate_chord_progression(chords)
+
+# 最初の8秒間を切り取る
+progression = progression[:int(sampling_rate * 8)]
+
+# 8秒間のループを繰り返す
+looped_progression = np.tile(progression, 4)  # 4回繰り返す (32秒分)
+
+# 音声を正規化
+looped_progression = looped_progression / np.max(np.abs(looped_progression))
+
+# 波形のプロット
+plt.figure(figsize=(12, 6))
+plt.plot(looped_progression[:sampling_rate * 8])  # 最初の8秒間を表示
+plt.title("Waveform of 6545 Progression (Piano-like, Looped)")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# FFTのプロット
+fft_data = np.fft.fft(looped_progression)
+frequencies = np.fft.fftfreq(len(fft_data), 1 / sampling_rate)
+plt.figure(figsize=(12, 6))
+plt.plot(frequencies[:len(frequencies) // 2], np.abs(fft_data)[:len(frequencies) // 2])
+plt.title("FFT of 6545 Progression (Piano-like, Looped)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# ファイルに保存
+progression_audio = (looped_progression * 32767).astype(np.int16)
+write("chord_progression_6545_piano_looped.wav", sampling_rate, progression_audio)
+
+# Google Colabで音声を再生
+ipd.Audio("chord_progression_6545_piano_looped.wav", rate=sampling_rate)
