@@ -1,0 +1,90 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートと基本的な周波数設定
+sampling_rate = 44100
+kick_frequency = 261.63  # ドの周波数（C）
+
+# リズムパターンの生成関数
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+def play_rhythm(pattern, beat_duration=0.5):
+    """指定されたリズムパターンを生成して再生"""
+    rhythm = np.zeros(int(sampling_rate * beat_duration * len(pattern)))
+    
+    for i, beat in enumerate(pattern):
+        if beat == 1:  # 音がある場合
+            sine_wave = generate_sine_wave(kick_frequency, beat_duration, sampling_rate)
+            rhythm[i * int(sampling_rate * beat_duration): (i + 1) * int(sampling_rate * beat_duration)] = sine_wave
+    
+    # 音声に変換
+    rhythm_audio_segment = AudioSegment(
+        (rhythm * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    return rhythm_audio_segment
+
+# エイトビート（8分音符）
+def eight_beat():
+    # 1小節を8分音符で分けたパターン（1小節の8つのビート）
+    pattern = [1, 0, 1, 0, 1, 0, 1, 0]  # 1が音を鳴らす、0は無音
+    rhythm = play_rhythm(pattern)
+    rhythm.export("eight_beat.wav", format="wav")
+    return Audio("eight_beat.wav")
+
+# シンコペーション（強拍や弱拍の予期しないタイミングで音を置く）
+def syncopation():
+    # 通常は強拍に置かれるべき音を弱拍やオフビートに配置
+    pattern = [1, 0, 0, 1, 0, 1, 0, 1]  # 音をオフビートに配置
+    rhythm = play_rhythm(pattern)
+    rhythm.export("syncopation.wav", format="wav")
+    return Audio("syncopation.wav")
+
+# シックスティーンビート（16分音符）
+def sixteen_beat():
+    # 1小節を16分音符で分けたパターン（1小節の16個のビート）
+    pattern = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # 16分音符のリズム
+    rhythm = play_rhythm(pattern)
+    rhythm.export("sixteen_beat.wav", format="wav")
+    return Audio("sixteen_beat.wav")
+
+# 3連符（1拍を3等分）
+def triplets():
+    # 1小節を3等分したパターン（3連符）
+    pattern = [1, 0, 0, 1, 0, 0, 1, 0, 0]  # 3連符のリズム
+    rhythm = play_rhythm(pattern, beat_duration=0.33)  # 1拍を3等分
+    rhythm.export("triplets.wav", format="wav")
+    return Audio("triplets.wav")
+
+# すべてのリズムを表示・再生する関数
+def play_all_rhythms():
+    # エイトビートを再生
+    print("エイトビート (Eight Beat):")
+    display(eight_beat())  # エイトビートの再生
+    print("\n")
+
+    # シンコペーションを再生
+    print("シンコペーション (Syncopation):")
+    display(syncopation())  # シンコペーションの再生
+    print("\n")
+
+    # シックスティーンビートを再生
+    print("シックスティーンビート (Sixteen Beat):")
+    display(sixteen_beat())  # シックスティーンビートの再生
+    print("\n")
+
+    # 3連符を再生
+    print("3連符 (Triplets):")
+    display(triplets())  # 3連符の再生
+    print("\n")
+
+# すべてのリズムを順番に再生
+play_all_rhythms()
