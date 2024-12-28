@@ -1,0 +1,62 @@
+import spacy
+from gensim.models import Word2Vec
+from sklearn.decomposition import PCA
+from collections import Counter
+
+# 歌詞のテキスト
+lyrics = """
+Students in suits, middle-aged men
+Women laughing vulgarly, and the elderly
+The noise, about to run wild,
+At the gambling hall, it even drowns the meaning of entertainment.
+
+Ignoring the irritated regulars, a first-timer gets lucky and wins big.
+Disillusioned by the intercom's suspicion, “Are you still going to buy after this, even in spring?”
+
+Three sevens line up, fever believers, and feedback.
+The sand machine shreds the banknotes like a shredder.
+
+Slow down, pachinko is oddly possessed by a miserly monster, full of anxiety.
+The human drama of CR, and before I know it, I’ve fallen into it.
+
+"Move, you're in the way..." laughing at the rotting school of fish, they give a warning.
+As revenge, I pick up the burning spoon they threw at me.
+
+I always put on the face of a "moratorium" person,
+The conversation is just noise, nodding and laughing even though I can’t hear it.
+
+Like mosquito larvae or water striders, everyone crawls through the night.
+The CR human patterns, personalities reduced to ABO types.
+
+Spinning 365 times, losing, no wins, becoming bankrupt.
+My life too, in some ways, closely resembles theirs.
+
+Yes, let’s go to the pachinko hall, where I won’t meet anyone.
+CR 108, desires for sex, food, and sleep are not satisfied.
+"""
+
+# spacyのモデルをロード
+nlp = spacy.load("en_core_web_sm")
+
+# 歌詞を処理
+doc = nlp(lyrics.lower())
+
+# ストップワードを除去してトークンを抽出
+filtered_tokens = [token.text for token in doc if not token.is_stop and token.is_alpha]
+
+# 頻度分析
+word_counts = Counter(filtered_tokens)
+
+# Word2Vecモデルの作成
+model = Word2Vec([filtered_tokens], vector_size=50, window=5, min_count=1, workers=4)
+
+# トークンを2次元にプロットするためにベクトルを取得
+vectors = [model.wv[token] for token in filtered_tokens]
+
+# PCAで2次元に次元削減
+pca = PCA(n_components=2)
+reduced_vectors = pca.fit_transform(vectors)
+
+# 数値で2次元の座標と頻度を表示
+for i, word in enumerate(filtered_tokens):
+    print(f"Word: {word} => Frequency: {word_counts[word]} => 2D Vector: {reduced_vectors[i]}")
