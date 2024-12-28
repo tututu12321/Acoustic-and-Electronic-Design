@@ -1,0 +1,73 @@
+import numpy as np
+import IPython.display as ipd  # Jupyter notebook用の音声再生ライブラリ
+from scipy import signal as sg  # 信号処理用のscipyモジュール
+
+# ギターの音を生成する関数を定義
+def guitar_sound(fret, offset, Fs, duration=4):
+    """
+    ギターの音を生成する関数。
+    
+    fret: ギターのフレットの位置
+    offset: オフセット。例えば弦ごとに異なる音程の補正値
+    Fs: サンプリング周波数（Hz）
+    duration: 音の長さ（秒）。デフォルトは4秒
+    
+    戻り値: 正規化されたギターの音波（配列）
+    """
+    
+    # 基本周波数Aを計算します。Aは開放弦の周波数（110Hz）に対して、フレットを押さえる位置に基づいて変化
+    A = 110 * 2**((fret + offset) / 12)
+    
+    # フィードバック遅延の計算。遅延はサンプリング周波数と基本周波数の比率で決まります
+    D = round(Fs / A)  # サンプリング周波数と周波数Aの比率を使って遅延時間を決定
+    
+    # フィルタの分子と分母を定義（簡単なLow-PassフィルタとCombフィルタ）
+    # Combフィルタでフィードバックを加え、ギター音の響きを再現
+    b = [0.5, 0.5]  # 分子（フィルタの入力に対する重み）
+    a = [1] + [0] * (D - 1) + [-0.5, -0.5]  # 分母（フィードバック遅延を反映させるために指定）
+    
+    # 音の長さ（duration秒）に基づいて、ゼロが並んだ長さのベクトルを生成
+    x = [0] * (Fs * duration)
+    
+    # フィルタの初期状態を乱数で初期化（システムの初期状態を設定）
+    ini = np.random.rand(np.amax([len(b), len(a)]) - 1)
+    
+    # フィルタをかける。lfilterを使って、ギターの音を生成する
+    Result = sg.lfilter(b, a, x, zi=ini)[0]
+    
+    # 音波の平均値を引いて、最大値で割って正規化（音量調整）
+    Result = (Result - np.mean(Result)) / np.amax(abs(Result))
+    
+    # 音波を返す
+    return Result
+
+
+if __name__ == "__main__":
+    
+    # サンプリング周波数44.1kHz（CD音質）
+    Fs = 44100
+    
+    # 弦ごとのオフセット設定。オフセットを使って、各弦の音程を補正します。
+    offset = [-5, 0, 5, 10, 14, 19]  # それぞれの弦の音程の補正値（フレットの位置による）
+    
+    # 和音の弦ごとのフレット設定（Gコードを使用）
+    fret_G = [3, 2, 0, 0, 0, 3]  # Gコードのフレット位置（各弦ごとのフレット番号）
+    
+    # 各弦を順番に弾く
+    for i in range(6):
+        # 各弦の音を生成
+        sound = guitar_sound(fret_G[i], offset[i], Fs, duration=4)
+        
+        # Google Colabで音を再生
+        print(f'弦 No.{i+1}')
+        ipd.display(ipd.Audio(data=sound, rate=Fs))
+    
+    # 和音を生成（全弦を重ね合わせて和音を作る）
+    Chord = 0
+    for i in range(6):
+        sound = guitar_sound(fret_G[i], offset[i], Fs, duration=4)
+        Chord = Chord + sound  # 各弦の音を重ねて和音を作成
+    
+    # 和音（弦の合成）を再生
+    print('和音 (弦の合成)')
+    ipd.display(ipd.Audio(data=Chord, rate=Fs))  # 和音を再生
