@@ -1,0 +1,89 @@
+import numpy as np
+from scipy.io.wavfile import write
+import IPython.display as ipd
+import matplotlib.pyplot as plt
+
+# サンプリングレートとリズムの設定
+sampling_rate = 44100  # 44.1 kHz
+beat_duration = 0.5    # 1拍の長さ (120 BPM)
+total_beats = 16       # ループ全体の長さ (拍数)
+
+# ドラム音生成用関数
+def generate_sine_wave(freq, duration, amp=1.0):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    return amp * np.sin(2 * np.pi * freq * t)
+
+def generate_kick():
+    freq = 40  # より低音域のキック
+    decay = 0.3
+    t = np.linspace(0, beat_duration, int(sampling_rate * beat_duration), endpoint=False)
+    kick = np.sin(2 * np.pi * freq * t) * np.exp(-t / decay)
+    overtones = 0.5 * np.sin(2 * np.pi * freq * 2 * t) * np.exp(-t / (decay * 1.5))
+    return kick + overtones
+
+def generate_snare():
+    noise = np.random.normal(0, 0.8, int(sampling_rate * beat_duration))
+    envelope = np.linspace(1, 0, len(noise))
+    body = generate_sine_wave(200, beat_duration, amp=0.5)
+    snare = noise * envelope + body
+    return snare
+
+def generate_hat():
+    noise = np.random.normal(0, 0.5, int(sampling_rate * beat_duration / 4))
+    envelope = np.linspace(1, 0, len(noise))
+    hat = noise * envelope
+    silence = np.zeros(len(hat) * 3)
+    return np.concatenate((hat, silence))
+
+# 4拍子リズムパターンを作成
+kick_pattern = [1, 0, 1, 0] * 4  # 1拍目と3拍目にキック
+snare_pattern = [0, 1, 0, 1] * 4  # 2拍目と4拍目にスネア
+hat_pattern = [1] * 16  # ハットを16分音符ごとに配置
+
+# ドラムループを生成
+kick = generate_kick()
+snare = generate_snare()
+hat = generate_hat()
+
+loop = np.zeros(total_beats * int(sampling_rate * beat_duration))
+
+for i in range(total_beats):
+    if kick_pattern[i]:
+        start = i * int(sampling_rate * beat_duration)
+        loop[start:start + len(kick)] += kick
+    if snare_pattern[i]:
+        start = i * int(sampling_rate * beat_duration)
+        loop[start:start + len(snare)] += snare
+
+hat_timeline = np.tile(hat, total_beats // len(hat))
+loop[:len(hat_timeline)] += hat_timeline
+
+# 音声を正規化
+loop = loop / np.max(np.abs(loop))
+
+# 波形のプロット
+plt.figure(figsize=(12, 6))
+plt.plot(loop[:sampling_rate * 2])  # 最初の2秒間を表示
+plt.title("Waveform of Four-on-the-Floor Drums")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# FFTのプロット
+fft_data = np.fft.fft(loop)
+frequencies = np.fft.fftfreq(len(fft_data), 1 / sampling_rate)
+plt.figure(figsize=(12, 6))
+plt.plot(frequencies[:len(frequencies) // 2], np.abs(fft_data)[:len(frequencies) // 2])
+plt.title("FFT of Four-on-the-Floor Drums")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# ファイルに保存
+loop_audio = (loop * 32767).astype(np.int16)
+write("4_on_the_floor.wav", sampling_rate, loop_audio)
+
+# Google Colabで音声を再生
+ipd.Audio("4_on_the_floor.wav", rate=sampling_rate)
