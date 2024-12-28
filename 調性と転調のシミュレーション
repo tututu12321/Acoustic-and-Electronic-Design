@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+from scipy.signal import butter, lfilter
+from IPython.display import Audio
+from google.colab import files
+import shutil
+
+# サンプリングレートと音の長さ
+sampling_rate = 44100  # サンプリングレート（Hz）
+duration = 0.5  # 音符の長さ（秒）
+
+# 音程を計算するための基本的な関数
+def generate_tone(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.sin(2 * np.pi * frequency * t)
+    return wave
+
+# 調性と調号：Cメジャーとその関連音
+def c_major_scale():
+    # Cメジャー音階（C, D, E, F, G, A, B, C）
+    frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C4, D4, E4, F4, G4, A4, B4, C5
+    scale_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in frequencies])
+    return scale_wave
+
+# 主調と副調（CメジャーからAマイナーへの移行）
+def tonic_and_relative_minor():
+    # Cメジャー音階とAマイナー音階
+    c_major = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C4, D4, E4, F4, G4, A4, B4, C5
+    a_minor = [220.00, 233.08, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00]  # A3, B3, C4, D4, E4, F4, G4, A4
+    tonic_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in c_major])
+    relative_minor_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in a_minor])
+    return tonic_wave, relative_minor_wave
+
+# 転調（キーの変更）：CメジャーからGメジャーへの転調
+def modulation_example():
+    # Cメジャー音階からGメジャー音階への転調
+    c_major = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C4, D4, E4, F4, G4, A4, B4, C5
+    g_major = [392.00, 440.00, 493.88, 523.25, 587.33, 659.26, 698.46, 784.00]  # G4, A4, B4, C5, D5, E5, F#5, G5
+    
+    # 音階を生成
+    c_major_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in c_major])
+    g_major_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in g_major])
+    
+    return c_major_wave, g_major_wave
+
+# 調性のモジュレーション（ドミナントモジュレーション）
+def dominant_modulation():
+    # ドミナントモジュレーション（Cメジャー→Gメジャー）
+    frequencies_c_major = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C4, D4, E4, F4, G4, A4, B4, C5
+    frequencies_g_major = [392.00, 440.00, 493.88, 523.25, 587.33, 659.26, 698.46, 784.00]  # G4, A4, B4, C5, D5, E5, F#5, G5
+    modulation_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in frequencies_c_major])
+    modulation_wave = np.concatenate([modulation_wave, generate_tone(392.00, duration, sampling_rate)])  # Gの音を追加
+    modulation_wave = np.concatenate([modulation_wave, np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in frequencies_g_major])])
+    return modulation_wave
+
+# 転調の技法（平行調転調：Cメジャー→Cマイナー）
+def parallel_modulation():
+    # Cメジャー→Cマイナー
+    c_major = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C4, D4, E4, F4, G4, A4, B4, C5
+    c_minor = [261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16, 523.25]  # C4, D4, D#4, F4, G4, A4, A#4, C5
+    c_major_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in c_major])
+    c_minor_wave = np.concatenate([generate_tone(frequency, duration, sampling_rate) for frequency in c_minor])
+    return c_major_wave, c_minor_wave
+
+# 各シミュレーションを実行
+c_major_wave = c_major_scale()
+tonic_wave, relative_minor_wave = tonic_and_relative_minor()
+modulation_wave_c, modulation_wave_g = modulation_example()
+dominant_modulation_wave = dominant_modulation()
+parallel_modulation_c, parallel_modulation_cm = parallel_modulation()
+
+# WAVファイルに保存
+write("c_major_scale.wav", sampling_rate, (c_major_wave * 32767).astype(np.int16))
+write("tonic_and_relative_minor.wav", sampling_rate, (tonic_wave * 32767).astype(np.int16))
+write("modulation_example_c_to_g.wav", sampling_rate, (modulation_wave_c * 32767).astype(np.int16))
+write("dominant_modulation.wav", sampling_rate, (dominant_modulation_wave * 32767).astype(np.int16))
+write("parallel_modulation_c_to_cm.wav", sampling_rate, (parallel_modulation_c * 32767).astype(np.int16))
+
+# ダウンロードリンクを作成
+files.download('/content/c_major_scale.wav')
+files.download('/content/tonic_and_relative_minor.wav')
+files.download('/content/modulation_example_c_to_g.wav')
+files.download('/content/dominant_modulation.wav')
+files.download('/content/parallel_modulation_c_to_cm.wav')
+
+# 結果の表示
+print("シミュレーション結果の音声ファイルが保存され、ダウンロード可能です。")
