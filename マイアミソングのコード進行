@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # サンプリングレートと音の設定
 sampling_rate = 44100  # 44.1 kHz
-tempo = 120  # BPM
+tempo = 70  # BPM
 beat_duration = 60 / tempo  # 1拍の長さ (秒)
 
 # ピアノ風の音を生成する関数
