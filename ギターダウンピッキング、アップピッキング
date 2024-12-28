@@ -1,0 +1,63 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートとギター音の周波数設定
+sampling_rate = 44100
+guitar_frequency = 110  # ギターの低いE弦の周波数（110Hz）
+
+# ギター音を生成する関数
+def generate_guitar_sound(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    guitar_wave = np.sin(2 * np.pi * frequency * t)
+    return guitar_wave
+
+# ダウンピッキングのエフェクト
+def apply_down_picking(audio, duration_seconds=0.5, attack_time=0.05):
+    """ダウンピッキングエフェクトを適用"""
+    # 音量が急激に立ち上がるエフェクト
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    attack_envelope = np.linspace(0, 1, int(sampling_rate * attack_time))  # 短い立ち上がり部分
+    attack_envelope = np.pad(attack_envelope, (0, len(t) - len(attack_envelope)), 'constant', constant_values=1)
+    
+    down_picking_audio = audio * attack_envelope  # ダウンピッキングの立ち上がり効果
+    return down_picking_audio
+
+# アップピッキングのエフェクト
+def apply_up_picking(audio, duration_seconds=0.5, release_time=0.1):
+    """アップピッキングエフェクトを適用"""
+    # 音量が急激に減少するエフェクト
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    release_envelope = np.linspace(1, 0, int(sampling_rate * release_time))  # 短い減衰部分
+    release_envelope = np.pad(release_envelope, (0, len(t) - len(release_envelope)), 'constant', constant_values=0)
+    
+    up_picking_audio = audio * release_envelope  # アップピッキングの減衰効果
+    return up_picking_audio
+
+# ダウンピッキングとアップピッキングを再現する関数
+def generate_picking_sequence():
+    # ギター音を生成（0.5秒のサンプル音）
+    guitar_wave = generate_guitar_sound(guitar_frequency, 0.5, sampling_rate)
+    
+    # ダウンピッキングとアップピッキングを交互に適用
+    down_picking = apply_down_picking(guitar_wave)
+    up_picking = apply_up_picking(guitar_wave)
+    
+    # 並べて1小節のリズム（4回のダウン、アップピッキング）
+    picking_sequence = np.concatenate([down_picking, up_picking, down_picking, up_picking])
+    
+    # 音声に変換
+    picking_audio = AudioSegment(
+        (picking_sequence * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    # 保存と再生
+    picking_audio.export("guitar_picking_sequence.wav", format="wav")
+    return Audio("guitar_picking_sequence.wav")
+
+# 再生
+generate_picking_sequence()
