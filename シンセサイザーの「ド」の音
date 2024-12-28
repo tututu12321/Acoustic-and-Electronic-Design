@@ -1,0 +1,87 @@
+import numpy as np
+from scipy.io.wavfile import write
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
+from IPython.display import Audio
+from google.colab import files
+import shutil
+
+# サンプリングレートと音の長さ
+sampling_rate = 44100  # サンプリングレート（Hz）
+duration = 3  # 音の長さ（秒）
+
+# シンセサイザーの「ド」の音の周波数（C4、261.63Hz）
+fundamental_frequency = 261.63  # C4の周波数（261.63Hz）
+
+# 時間軸の作成
+t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+
+# 基本波形（矩形波と鋸波を組み合わせる）
+def generate_wave(frequency, t, wave_type='sawtooth'):
+    if wave_type == 'sawtooth':
+        return 2 * (t * frequency - np.floor(t * frequency + 0.5))  # 鋸波
+    elif wave_type == 'square':
+        return np.sign(np.sin(2 * np.pi * frequency * t))  # 矩形波
+    elif wave_type == 'sine':
+        return np.sin(2 * np.pi * frequency * t)  # サイン波
+
+# 複数の波形を組み合わせる（矩形波 + 鋸波）
+wave1 = generate_wave(fundamental_frequency, t, wave_type='sawtooth')
+wave2 = generate_wave(fundamental_frequency * 2, t, wave_type='square')  # オクターブ上の矩形波
+synth_wave = wave1 + wave2  # 鋸波と矩形波の合成
+
+# ピックアップ効果: 高周波を強調するためのハイパスフィルター
+def high_pass_filter(data, cutoff_frequency, sampling_rate, order=6):
+    nyquist = 0.5 * sampling_rate
+    normal_cutoff = cutoff_frequency / nyquist
+    b, a = butter(order, normal_cutoff, btype='high', analog=False)
+    return lfilter(b, a, data)
+
+# ピックアップ効果を模倣するために高周波成分を強調
+cutoff_frequency = 800  # ピックアップが拾う高周波のカットオフ周波数（Hz）
+filtered_wave = high_pass_filter(synth_wave, cutoff_frequency, sampling_rate)
+
+# エンベロープ（アタック、サステイン、ディケイ）
+def apply_envelope(wave, attack=0.05, sustain=0.2, release=0.5, sampling_rate=44100):
+    attack_samples = int(attack * sampling_rate)
+    sustain_samples = int(sustain * sampling_rate)
+    release_samples = int(release * sampling_rate)
+    total_samples = len(wave)
+    
+    envelope = np.ones_like(wave)
+    
+    # アタック部分
+    envelope[:attack_samples] = np.linspace(0, 1, attack_samples)
+    
+    # サステイン部分
+    envelope[attack_samples:attack_samples + sustain_samples] = 1
+    
+    # リリース部分
+    envelope[-release_samples:] = np.linspace(1, 0, release_samples)
+    
+    return wave * envelope
+
+# エンベロープを加える
+synth_wave_with_envelope = apply_envelope(filtered_wave)
+
+# 波形をWAVファイルに保存
+output_file = "synthesizer_sound_with_effects.wav"
+write(output_file, sampling_rate, (synth_wave_with_envelope * 32767).astype(np.int16))
+
+# 波形をプロット
+plt.figure(figsize=(10, 4))
+plt.plot(t[:1000], synth_wave_with_envelope[:1000])  # 最初の1000サンプルを表示
+plt.title("Synthesizer Sound with Pickup Effect and Envelope (C4)")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.show()
+
+# 音声を再生
+Audio(output_file)  # シンセサイザーの音を再生
+
+# Google Colabでファイルをダウンロードできるようにする
+shutil.move(output_file, '/content/' + output_file)  # ファイルを適切な場所に移動
+files.download('/content/' + output_file)  # ダウンロードリンクを作成
+
+# 結果の表示
+print(f"シンセサイザーの音が保存され、ダウンロード可能です: {output_file}")
