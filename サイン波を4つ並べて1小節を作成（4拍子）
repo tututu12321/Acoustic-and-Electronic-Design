@@ -1,0 +1,38 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートと周波数設定
+sampling_rate = 44100
+kick_frequency = 261.63  # ドの周波数（C）
+
+# テンポ（BPM）設定
+bpm = 120  # 例えば120 BPM（テンポ）
+
+# 1拍の長さ（秒）
+beat_duration = 60 / bpm  # 1拍の長さ（秒）
+
+# サイン波（ド）を生成
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+# サイン波の生成（ド）
+sine_wave = generate_sine_wave(kick_frequency, beat_duration, sampling_rate)  # 1拍分（テンポに基づく）
+
+# 4分の4拍子（1小節）を作成
+four_four_time = np.tile(sine_wave, 4)  # サイン波を4つ並べて1小節を作成（4拍子）
+
+# サイン波のAudioSegmentへの変換
+audio_segment = AudioSegment(
+    (four_four_time * 32767).astype(np.int16).tobytes(), 
+    frame_rate=sampling_rate, 
+    sample_width=2, 
+    channels=1
+)
+
+# 再生
+audio_segment.export("four_four_time_with_tempo_output.wav", format="wav")
+Audio("four_four_time_with_tempo_output.wav")
