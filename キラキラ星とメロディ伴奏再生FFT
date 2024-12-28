@@ -1,0 +1,120 @@
+import numpy as np
+import IPython.display as ipd
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+
+# サンプリング周波数
+fs = 44100  
+
+# 音階の周波数
+notes = {
+    'C4': 261.63,  # ド
+    'D4': 293.66,  # レ
+    'E4': 329.63,  # ミ
+    'F4': 349.23,  # ファ
+    'G4': 392.00,  # ソ
+    'A4': 440.00,  # ラ
+    'B4': 493.88,  # シ
+    'C5': 523.25,  # ド（オクターブ上）
+    'C3': 130.81,  # ド（オクターブ下）
+    'G3': 196.00,  # ソ（オクターブ下）
+    'F3': 174.61,  # ファ（オクターブ下）
+    'E3': 164.81,  # ミ（オクターブ下）
+    'D3': 146.83   # レ（オクターブ下）
+}
+
+# 音を生成する関数 (ピアノ用の波形合成 + ベース用の低域強調)
+def generate_tone(frequency, duration, fs, is_piano=True, volume_factor=1.0):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    
+    if is_piano:  # ピアノ風
+        # ピアノは矩形波や三角波を組み合わせることで豊かな音色を作る
+        waveform = 0.6 * np.sin(2 * np.pi * frequency * t)  # 基本波（サイン波）
+        waveform += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)  # 2倍周波数（高調波）
+        waveform += 0.1 * np.sin(2 * np.pi * frequency * 3 * t)  # 3倍周波数（高調波）
+        waveform *= np.exp(-t / (duration / 5))  # エンベロープ（音の減衰）
+        
+    else:  # ベース用
+        # ベース音は低音域を強調し、フィルターで高音成分をカット
+        waveform = np.sin(2 * np.pi * frequency * t)  # 基本波（サイン波）
+        # ローパスフィルターで高音をカット
+        waveform = np.convolve(waveform, np.ones(100)/100, mode='same')
+        waveform *= volume_factor  # ボリュームの強調
+
+    return waveform
+
+# きらきら星のメロディ (ピアノ)
+melody = [
+    'C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4',  # 1行目
+    'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4'   # 2行目
+]
+
+# 伴奏のコード (ベース)
+accompaniment = [
+    'C3', 'C3', 'G3', 'G3', 'F3', 'F3', 'C3',  # 1行目
+    'F3', 'F3', 'E3', 'E3', 'D3', 'D3', 'C3'   # 2行目
+]
+
+# きらきら星メロディーの波形作成 (ピアノ)
+melody_wave_1 = np.concatenate([generate_tone(notes[note], 0.5, fs, is_piano=True) for note in melody[:7]])
+
+# 伴奏の波形を作成 (ベース)
+accompaniment_wave_1 = np.concatenate([generate_tone(notes[note], 0.5, fs, is_piano=False, volume_factor=2.0) for note in accompaniment[:7]])
+
+# 自由に設定できる静寂の関数
+def generate_silence(duration_seconds, fs):
+    return np.zeros(int(fs * duration_seconds))  # 1秒間の静寂を作成
+
+# ここで静寂の長さを自由に設定できます（例えば秒間の静寂）
+silence_duration = 0.45  # 静寂の長さ（秒）
+silence = generate_silence(silence_duration, fs)
+
+# 2行目のメロディーと伴奏の波形を作成
+melody_wave_2 = np.concatenate([generate_tone(notes[note], 0.5, fs, is_piano=True) for note in melody[7:]])
+accompaniment_wave_2 = np.concatenate([generate_tone(notes[note], 0.5, fs, is_piano=False, volume_factor=2.0) for note in accompaniment[7:]])
+
+# メロディと伴奏を重ね合わせる
+melody_wave = np.concatenate([melody_wave_1, silence, melody_wave_2])
+accompaniment_wave = np.concatenate([accompaniment_wave_1, silence, accompaniment_wave_2])
+
+# メロディと伴奏を重ね合わせる
+max_length = max(len(melody_wave), len(accompaniment_wave))
+melody_wave = np.pad(melody_wave, (0, max_length - len(melody_wave)), 'constant')
+accompaniment_wave = np.pad(accompaniment_wave, (0, max_length - len(accompaniment_wave)), 'constant')
+
+combined_wave = melody_wave + accompaniment_wave
+
+# 音の正規化（-1 ~ 1 の範囲に収める）
+combined_wave = np.int16(combined_wave / np.max(np.abs(combined_wave)) * 32767)
+
+# 波形のプロット
+plt.figure(figsize=(10, 4))
+plt.plot(np.linspace(0, len(combined_wave) / fs, len(combined_wave)), combined_wave)
+plt.title('Waveform of Combined Melody and Accompaniment with Silence')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+plt.show()
+
+# FFTのプロット
+n = len(combined_wave)
+f = np.fft.fftfreq(n, 1/fs)
+fft_values = np.fft.fft(combined_wave)
+
+# FFTを正の周波数成分だけ抽出
+positive_freqs = f[:n//2]
+positive_fft_values = np.abs(fft_values)[:n//2]
+
+plt.figure(figsize=(10, 4))
+plt.plot(positive_freqs, positive_fft_values)
+plt.title('FFT of Combined Melody and Accompaniment with Silence')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Magnitude')
+plt.grid(True)
+plt.show()
+
+# 音声データを.wavファイルとして保存
+write('combined_sound_with_custom_silence.wav', fs, combined_wave)
+
+# Google Colabで再生
+ipd.Audio('combined_sound_with_custom_silence.wav')
