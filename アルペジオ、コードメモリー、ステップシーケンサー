@@ -1,0 +1,96 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートと基本的な周波数設定
+sampling_rate = 44100
+
+# 音を生成する関数
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+# アルペジオの再生
+def arpeggio(chord_frequencies, duration_seconds=0.5):
+    """和音の音を順番に鳴らすアルペジオ"""
+    arpeggio_audio = np.array([])
+    
+    for freq in chord_frequencies:
+        sine_wave = generate_sine_wave(freq, duration_seconds, sampling_rate)
+        arpeggio_audio = np.concatenate((arpeggio_audio, sine_wave))  # 各音を順番に繋げていく
+    
+    # 音声に変換
+    arpeggio_audio_segment = AudioSegment(
+        (arpeggio_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    return arpeggio_audio_segment
+
+# コードメモリー
+def chord_memory(chord_frequencies, duration_seconds=2):
+    """コードメモリー：指定された和音を再生"""
+    chord_audio = np.array([])
+    
+    for freq in chord_frequencies:
+        sine_wave = generate_sine_wave(freq, duration_seconds, sampling_rate)
+        chord_audio = np.concatenate((chord_audio, sine_wave))  # 和音を再生
+    
+    # 音声に変換
+    chord_audio_segment = AudioSegment(
+        (chord_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    return chord_audio_segment
+
+# ステップシーケンサー
+def step_sequencer(pattern, duration_seconds=0.5, frequencies=None):
+    """ステップシーケンサー：リズムまたはメロディを生成"""
+    if frequencies is None:
+        frequencies = [440, 440, 523.25, 523.25]  # デフォルトの音（A4、A4、C5、C5）
+    
+    sequence_audio = np.array([])
+
+    for i, step in enumerate(pattern):
+        if step == 1:  # 音がある場合
+            sine_wave = generate_sine_wave(frequencies[i % len(frequencies)], duration_seconds, sampling_rate)
+            sequence_audio = np.concatenate((sequence_audio, sine_wave))  # 各ステップを繋げていく
+    
+    # 音声に変換
+    sequence_audio_segment = AudioSegment(
+        (sequence_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    return sequence_audio_segment
+
+# すべてを順番に再生する関数
+def play_all():
+    print("アルペジオを再生:")
+    arpeggio_audio = arpeggio([329.63, 415.30, 493.88])  # E, G#, B
+    display(arpeggio_audio)  # アルペジオ再生
+    print("\n")
+
+    print("コードメモリーを再生:")
+    chord_audio = chord_memory([329.63, 415.30, 493.88])  # E, G#, B
+    display(chord_audio)  # コードメモリー再生
+    print("\n")
+
+    print("ステップシーケンサーを再生:")
+    # ステップシーケンサーで、音符を交互に鳴らす（1拍ごと）
+    pattern = [1, 0, 1, 0, 1, 0, 1, 0]  # 音を1拍ごとに鳴らすパターン
+    sequence_audio = step_sequencer(pattern, frequencies=[329.63, 349.23, 392.00, 440.00])  # E, F, G, A
+    display(sequence_audio)  # ステップシーケンサー再生
+    print("\n")
+
+# すべてのパターンを順番に再生
+play_all()
