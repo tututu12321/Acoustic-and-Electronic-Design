@@ -1,0 +1,44 @@
+# Install necessary libraries in Google Colab
+!pip install pydub
+!apt-get install ffmpeg
+
+from pydub import AudioSegment
+from pydub.generators import Sine
+import os
+from google.colab import files
+
+# Define the root frequencies for the chords
+# A♭ major: A♭
+# G major: G
+# C minor: C
+# E♭ major: E♭
+
+def generate_chord(frequency, duration_ms=1000):
+    """Generate a sine wave for a given frequency."""
+    return Sine(frequency).to_audio_segment(duration=duration_ms)
+
+# Frequencies for the root notes of each chord
+chords = {
+    "A♭": 415.30,  # A♭
+    "G": 392.00,   # G
+    "Cm": 261.63,  # C
+    "E♭": 311.13   # E♭
+}
+
+# Create AudioSegment for each chord (root note only)
+A_flat_chord = generate_chord(chords["A♭"])
+G_chord = generate_chord(chords["G"])
+Cm_chord = generate_chord(chords["Cm"])
+E_flat_chord = generate_chord(chords["E♭"])
+
+# Concatenate all chords
+song = A_flat_chord + G_chord + Cm_chord + E_flat_chord
+
+# Define the path to save the file
+file_path = "/tmp/simple_mandarin_progression.wav"
+
+# Export to a wav file
+song.export(file_path, format="wav")
+
+# Create a downloadable link
+files.download(file_path)
