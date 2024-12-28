@@ -1,0 +1,60 @@
+import numpy as np
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+# サンプルレート（音声のサンプリング周波数）
+sr = 22050  # 22.05 kHz
+
+# 周波数（ドの音：C4）
+do_frequency = 261.63  # C4の周波数
+noise_duration = 1.0  # 雑音の長さ
+do_duration = 1.0    # ドの音の長さ
+
+# サイン波生成関数
+def generate_tone(frequency, duration, sr):
+    t = np.linspace(0, duration, int(sr * duration), endpoint=False)  # 時間軸
+    return 0.5 * np.sin(2 * np.pi * frequency * t)  # サイン波
+
+# 雑音生成関数
+def generate_noise(duration, sr):
+    return np.random.uniform(-1, 1, int(sr * duration))  # 一様分布のランダム雑音
+
+# ドの音（C4）の生成
+do_tone = generate_tone(do_frequency, do_duration, sr)
+
+# 雑音の生成
+noise = generate_noise(noise_duration, sr)
+
+# ダミーデータの生成（ドの音と雑音をラベル付け）
+X = np.array([do_tone, noise])  # 特徴量（ドの音と雑音）
+y = np.array([0, 1])  # ラベル（0: ドの音, 1: 雑音）
+
+# MFCC（メル周波数ケプストラム係数）の抽出
+def extract_mfcc(signal, sr):
+    mfcc = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=13)
+    return np.mean(mfcc, axis=1)  # MFCCを平均して特徴量にする
+
+X_mfcc = np.array([extract_mfcc(x, sr) for x in X])
+
+# データの形状を確認
+print("MFCC Features Shape:", X_mfcc.shape)
+
+# モデルの構築（シンプルなDNN）
+model = models.Sequential([
+    layers.Dense(64, activation='relu', input_dim=X_mfcc.shape[1]),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(1, activation='sigmoid')  # 0 or 1 の出力
+])
+
+# モデルのコンパイル
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# モデルの学習
+model.fit(X_mfcc, y, epochs=10, batch_size=1)
+
+# モデルの評価（ダミーデータでの評価）
+loss, accuracy = model.evaluate(X_mfcc, y)
+print(f"Accuracy: {accuracy * 100:.2f}%")
