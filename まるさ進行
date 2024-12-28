@@ -1,0 +1,44 @@
+# Install necessary libraries in Google Colab
+!pip install pydub
+!apt-get install ffmpeg
+
+from pydub import AudioSegment
+from pydub.generators import Sine
+import os
+from google.colab import files
+
+# Define the root frequencies for the chords
+# IVM7 (F major 7): F
+# III7 (E dominant 7): E
+# VIm7 (A minor 7): A
+# I7 (C dominant 7): C
+
+def generate_chord(frequency, duration_ms=1000):
+    """Generate a sine wave for a given frequency."""
+    return Sine(frequency).to_audio_segment(duration=duration_ms)
+
+# Frequencies for the root notes of each chord
+chords = {
+    "F": 349.23,  # F (IVM7 chord)
+    "E": 329.63,  # E (III7 chord)
+    "A": 440.00,  # A (VIm7 chord)
+    "C": 261.63   # C (I7 chord)
+}
+
+# Create AudioSegment for each chord (root note only)
+F_chord = generate_chord(chords["F"])
+E_chord = generate_chord(chords["E"])
+A_chord = generate_chord(chords["A"])
+C_chord = generate_chord(chords["C"])
+
+# Concatenate all chords
+song = F_chord + E_chord + A_chord + C_chord
+
+# Define the path to save the file
+file_path = "/tmp/ivm7_iii7_vim7_i7_progression.wav"
+
+# Export to a wav file
+song.export(file_path, format="wav")
+
+# Create a downloadable link
+files.download(file_path)
