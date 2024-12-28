@@ -1,0 +1,52 @@
+import numpy as np
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+
+# サンプルレート（音声のサンプリング周波数）
+sr = 22050  # 22.05 kHz
+
+# 周波数（ド、レ、ミの周波数）
+frequencies = {
+    'do': 261.63,  # C4
+    're': 293.66,  # D4
+    'mi': 329.63   # E4
+}
+
+# サイン波生成関数
+def generate_tone(frequency, duration, sr):
+    t = np.linspace(0, duration, int(sr * duration), endpoint=False)  # 時間軸
+    return 0.5 * np.sin(2 * np.pi * frequency * t)  # サイン波
+
+# 各音の生成（0.5秒の長さで）
+do_tone = generate_tone(frequencies['do'], 0.5, sr)
+re_tone = generate_tone(frequencies['re'], 0.5, sr)
+mi_tone = generate_tone(frequencies['mi'], 0.5, sr)
+
+# 音を連結（ドレミ）
+y = np.concatenate([do_tone, re_tone, mi_tone])
+
+# 波形をプロット
+plt.figure(figsize=(10, 6))
+librosa.display.waveshow(y, sr=sr)
+plt.title('Waveform of Do, Re, Mi')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.show()
+
+# スペクトル解析（短時間フーリエ変換: STFT）
+D = librosa.stft(y)
+D_db = librosa.amplitude_to_db(np.abs(D), ref=np.max)
+
+# スペクトログラムをプロット
+plt.figure(figsize=(10, 6))
+librosa.display.specshow(D_db, sr=sr, x_axis='time', y_axis='log')
+plt.title('Spectrogram (STFT) of Do, Re, Mi')
+plt.colorbar(format='%+2.0f dB')
+plt.xlabel('Time (s)')
+plt.ylabel('Frequency (Hz)')
+plt.show()
+
+# 音高（テンポ）推定
+tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)  # yをキーワード引数として渡す
+print(f"Estimated tempo: {tempo} beats per minute")
