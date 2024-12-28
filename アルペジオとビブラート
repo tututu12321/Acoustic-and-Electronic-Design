@@ -1,0 +1,110 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートと基本的な周波数設定
+sampling_rate = 44100
+
+# 音を生成する関数
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+# アルペジオの再生
+def arpeggio(chord_frequencies, duration_seconds=0.5):
+    """和音の音を順番に鳴らすアルペジオ"""
+    arpeggio_audio = np.array([])
+    
+    for freq in chord_frequencies:
+        sine_wave = generate_sine_wave(freq, duration_seconds, sampling_rate)
+        arpeggio_audio = np.concatenate((arpeggio_audio, sine_wave))  # 各音を順番に繋げていく
+    
+    # 音声に変換
+    arpeggio_audio_segment = AudioSegment(
+        (arpeggio_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    return arpeggio_audio_segment
+
+# ビブラートの実装
+def vibrato(audio, frequency=5, depth=0.05, duration_seconds=1.0):
+    """ビブラートエフェクトを音に適用"""
+    t = np.linspace(0, duration_seconds, len(audio), endpoint=False)  # 音声と同じ長さで時間軸を設定
+    vibrato_wave = np.sin(2 * np.pi * frequency * t)  # ビブラートの周期を作成
+    vibrato_wave = 1 + depth * vibrato_wave  # 音程の揺れの深さを設定
+    
+    # ビブラートを音に適用
+    vibrato_audio = audio * vibrato_wave
+    
+    return vibrato_audio
+
+# アルペジオとビブラートを適用して再生
+def arpeggio_with_vibrato():
+    # Eコード（E, G#, B）でアルペジオを生成
+    chord_frequencies = [329.63, 415.30, 493.88]  # E, G#, B
+    arpeggio_audio_segment = arpeggio(chord_frequencies, duration_seconds=0.5)
+    
+    # ビブラートをアルペジオに適用
+    vibrato_audio = vibrato(np.array(arpeggio_audio_segment.get_array_of_samples()), frequency=5, depth=0.1, duration_seconds=arpeggio_audio_segment.duration_seconds / 1000.0)
+    
+    # ビブラートを適用した音をAudioSegmentに戻す
+    vibrato_audio_segment = AudioSegment(
+        (vibrato_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    # 保存して再生
+    vibrato_audio_segment.export("arpeggio_with_vibrato.wav", format="wav")
+    return Audio("arpeggio_with_vibrato.wav")
+
+# アルペジオのみを再生
+def play_arpeggio():
+    # Eコード（E, G#, B）でアルペジオを生成
+    chord_frequencies = [329.63, 415.30, 493.88]  # E, G#, B
+    arpeggio_audio_segment = arpeggio(chord_frequencies, duration_seconds=0.5)
+    arpeggio_audio_segment.export("arpeggio.wav", format="wav")
+    return Audio("arpeggio.wav")
+
+# ビブラートのみを再生
+def play_vibrato():
+    # 1つの周波数で音を生成しビブラートをかける
+    frequency = 329.63  # E音
+    sine_wave = generate_sine_wave(frequency, duration_seconds=2.0, sampling_rate=sampling_rate)
+    
+    # ビブラートを適用
+    vibrato_audio = vibrato(sine_wave, frequency=5, depth=0.1, duration_seconds=2.0)
+    
+    # ビブラートを適用した音をAudioSegmentに戻す
+    vibrato_audio_segment = AudioSegment(
+        (vibrato_audio * 32767).astype(np.int16).tobytes(),
+        frame_rate=sampling_rate,
+        sample_width=2,
+        channels=1
+    )
+    
+    vibrato_audio_segment.export("vibrato.wav", format="wav")
+    return Audio("vibrato.wav")
+
+# すべてを表示して再生
+def play_all():
+    print("アルペジオとビブラートを適用した音（アルペジオとビブラートの組み合わせ）:")
+    display(arpeggio_with_vibrato())  # アルペジオとビブラートを適用して再生
+    print("\n")
+    
+    print("アルペジオのみを再生:")
+    display(play_arpeggio())  # アルペジオのみを再生
+    print("\n")
+    
+    print("ビブラートのみを再生:")
+    display(play_vibrato())  # ビブラートのみを再生
+    print("\n")
+
+# すべてのパターンを表示して再生
+play_all()
