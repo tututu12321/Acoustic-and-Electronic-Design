@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+from scipy.signal import sawtooth, square
+from IPython.display import Audio
+import time
+
+# 基本設定
+sampling_rate = 44100  # サンプリングレート
+frequency = 261.63  # ド(C4)の周波数 (Hz)
+duration = 1.0  # 波形表示用の音の持続時間 (秒)
+playback_duration = 5.0  # 再生用の音の持続時間 (秒)
+t = np.linspace(0, 2 / frequency, int(sampling_rate * (2 / frequency)), endpoint=False)  # 時間軸 (2周期分)
+t_playback = np.linspace(0, playback_duration, int(sampling_rate * playback_duration), endpoint=False)  # 再生用時間軸
+
+# 各波形の生成
+def generate_waveforms():
+    waveforms = {
+        "Sine Wave": np.sin(2 * np.pi * frequency * t),
+        "Sawtooth Wave": sawtooth(2 * np.pi * frequency * t),
+        "Triangle Wave": sawtooth(2 * np.pi * frequency * t, width=0.5),
+        "Square Wave": square(2 * np.pi * frequency * t),
+        "Pulse Wave": square(2 * np.pi * frequency * t, duty=0.2),
+        "Noise Wave": np.random.normal(0, 0.5, len(t)),
+    }
+    return waveforms
+
+# 減算合成
+# Subtract two waveforms
+subtractive_synthesis = lambda w1, w2: w1 - w2
+
+# 加算合成
+# Add two waveforms
+additive_synthesis = lambda w1, w2: w1 + w2
+
+# 乗算合成(FM音源)
+# Multiply two waveforms for FM synthesis
+fm_synthesis = lambda w1, w2: w1 * w2
+
+# 合成波形の生成
+def generate_synthesized_waveforms(waveforms):
+    synthesized_waveforms = {
+        "Subtractive Synthesis": subtractive_synthesis(waveforms["Sine Wave"], waveforms["Sawtooth Wave"]),
+        "Additive Synthesis": additive_synthesis(waveforms["Sine Wave"], waveforms["Triangle Wave"]),
+        "FM Synthesis": fm_synthesis(waveforms["Sine Wave"], waveforms["Square Wave"]),
+    }
+    return synthesized_waveforms
+
+# 波形のプロットとFFT表示
+def plot_waveform_and_fft(waveforms):
+    for name, waveform in waveforms.items():
+        xf, yf = compute_fft(waveform)
+        plt.figure(figsize=(14, 8))  # 波形を拡大表示
+
+        # 波形プロット
+        plt.subplot(2, 1, 1)
+        plt.plot(t, waveform)
+        plt.title(f"{name} - Waveform")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Amplitude")
+        plt.grid(True)  # グリッドを追加
+
+        # FFTプロット
+        plt.subplot(2, 1, 2)
+        plt.plot(xf, yf)
+        plt.title(f"{name} - FFT")
+        plt.xlabel("Frequency [Hz]")
+        plt.ylabel("Magnitude")
+        plt.grid(True)  # グリッドを追加
+
+        plt.tight_layout()
+        plt.show()
+
+# メイン処理
+waveforms = generate_waveforms()
+plot_waveform_and_fft(waveforms)
+
+synthesized_waveforms = generate_synthesized_waveforms(waveforms)
+plot_waveform_and_fft(synthesized_waveforms)
