@@ -1,0 +1,96 @@
+import numpy as np
+from scipy.io.wavfile import write
+import IPython.display as ipd
+import matplotlib.pyplot as plt
+
+# サンプリングレートと音の設定
+sampling_rate = 44100  # 44.1 kHz
+tempo = 60  # BPM
+beat_duration = 60 / tempo  # 1拍の長さ (秒)
+
+# ギター風の音を生成する関数
+def generate_guitar_wave(freq, duration, amp=0.5):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    envelope = np.exp(-4 * t)  # ギターらしい減衰エンベロープ
+    wave = amp * np.sin(2 * np.pi * freq * t) * envelope
+    # 過剰倍音を追加してギターっぽさを再現
+    wave += (amp / 2) * np.sin(2 * np.pi * freq * 2 * t) * envelope
+    wave += (amp / 4) * np.sin(2 * np.pi * freq * 3 * t) * envelope
+    return wave
+
+# 楽曲のコード進行（各セクションごと）
+sections = [
+    # 01:13 - 「あの日僕ら～」
+    [
+        [(349.23, beat_duration), (440.00, beat_duration), (523.25, beat_duration)],  # F: F, A, C
+        [(392.00, beat_duration), (493.88, beat_duration), (659.25, beat_duration)],  # G: G, B, D
+        [(261.63, beat_duration), (329.63, beat_duration), (391.99, beat_duration)],  # C: C, E, G
+        [(329.63, beat_duration), (391.99, beat_duration), (659.25, beat_duration)],  # C on E: E, G, C
+    ],
+    # 01:17 - 「大人と同じ～」
+    [
+        [(293.66, beat_duration), (349.23, beat_duration), (440.00, beat_duration)],  # Dm: D, F, A
+        [(329.63, beat_duration), (391.99, beat_duration), (659.25, beat_duration)],  # C on E: E, G, C
+        [(261.63, beat_duration), (329.63, beat_duration), (391.99, beat_duration)],  # C: C, E, G
+        [(261.63, beat_duration), (329.63, beat_duration), (391.99, beat_duration), (466.16, beat_duration)],  # C7: C, E, G, Bb
+    ],
+    # 01:21 - 「行けもしない～」
+    [
+        [(349.23, beat_duration), (440.00, beat_duration), (523.25, beat_duration)],  # F: F, A, C
+        [(392.00, beat_duration), (493.88, beat_duration), (659.25, beat_duration)],  # G: G, B, D
+        [(261.63, beat_duration), (329.63, beat_duration), (391.99, beat_duration)],  # C: C, E, G
+        [(329.63, beat_duration), (391.99, beat_duration), (659.25, beat_duration)],  # C on E: E, G, C
+    ],
+    # 01:25 - 「立てて～」
+    [
+        [(349.23, beat_duration), (440.00, beat_duration), (523.25, beat_duration)],  # F: F, A, C
+        [(329.63, beat_duration), (391.99, beat_duration), (659.25, beat_duration)],  # C on E: E, G, C
+        [(293.66, beat_duration), (349.23, beat_duration), (440.00, beat_duration)],  # Dm: D, F, A
+        [(261.63, beat_duration), (329.63, beat_duration), (391.99, beat_duration)],  # C: C, E, G
+    ],
+]
+
+# 各セクションを合成
+def generate_song(sections):
+    song = np.array([])
+    for section in sections:
+        section_wave = np.array([])
+        for chord in section:
+            chord_wave = np.zeros(int(sampling_rate * beat_duration))
+            for freq, duration in chord:
+                chord_wave += generate_guitar_wave(freq, duration)
+            section_wave = np.concatenate((section_wave, chord_wave))
+        song = np.concatenate((song, section_wave))
+    return song
+
+song_progression = generate_song(sections)
+
+# 音声を正規化
+song_progression = song_progression / np.max(np.abs(song_progression))
+
+# 波形のプロット
+plt.figure(figsize=(12, 6))
+plt.plot(song_progression[:sampling_rate * 8])  # 最初の8秒間を表示
+plt.title("Waveform of Full Song Progression (Guitar-like)")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# FFTのプロット
+fft_data = np.fft.fft(song_progression)
+frequencies = np.fft.fftfreq(len(fft_data), 1 / sampling_rate)
+plt.figure(figsize=(12, 6))
+plt.plot(frequencies[:len(frequencies) // 2], np.abs(fft_data)[:len(frequencies) // 2])
+plt.title("FFT of Full Song Progression (Guitar-like)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.show()
+
+# ファイルに保存
+song_audio = (song_progression * 32767).astype(np.int16)
+write("full_song_guitar.wav", sampling_rate, song_audio)
+
+# Google Colabで音声を再生
+ipd.Audio("full_song_guitar.wav", rate=sampling_rate)
