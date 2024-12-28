@@ -1,0 +1,80 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Sampling settings
+fs = 44100  # Sampling frequency in Hz
+duration = 2  # Duration of each scale in seconds
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)  # Time vector
+
+# Function to generate a scale wave
+def generate_scale_wave(scale_frequencies, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    wave = np.zeros_like(t)
+    note_duration = duration / len(scale_frequencies)
+    for i, freq in enumerate(scale_frequencies):
+        start = int(i * note_duration * fs)
+        end = int((i + 1) * note_duration * fs)
+        wave[start:end] = np.sin(2 * np.pi * freq * t[start:end])
+    return wave
+
+# Function to calculate spectrum
+def calculate_spectrum(wave, fs):
+    fft_result = np.fft.fft(wave)
+    freqs = np.fft.fftfreq(len(fft_result), 1 / fs)
+    magnitude = np.abs(fft_result)[:len(freqs) // 2]
+    freqs = freqs[:len(freqs) // 2]
+    return freqs, magnitude
+
+# Frequencies for scales (in Hz)
+c_major = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C, D, E, F, G, A, B, C
+g_major = [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99]  # G, A, B, C, D, E, F#, G
+eb_major = [311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 587.33, 622.25]  # E♭, F, G, A♭, B♭, C, D, E♭
+
+# Generate waves
+c_major_wave = generate_scale_wave(c_major, duration, fs)
+g_major_wave = generate_scale_wave(g_major, duration, fs)
+eb_major_wave = generate_scale_wave(eb_major, duration, fs)
+
+# Calculate spectra
+c_major_freqs, c_major_magnitude = calculate_spectrum(c_major_wave, fs)
+g_major_freqs, g_major_magnitude = calculate_spectrum(g_major_wave, fs)
+eb_major_freqs, eb_major_magnitude = calculate_spectrum(eb_major_wave, fs)
+
+# Plot waveforms and spectra
+fig, axs = plt.subplots(3, 2, figsize=(15, 10))
+
+# C Major
+axs[0, 0].plot(t, c_major_wave)
+axs[0, 0].set_title("C Major Scale Waveform")
+axs[0, 0].set_xlabel("Time (s)")
+axs[0, 0].set_ylabel("Amplitude")
+
+axs[0, 1].plot(c_major_freqs, c_major_magnitude)
+axs[0, 1].set_title("C Major Scale Spectrum")
+axs[0, 1].set_xlabel("Frequency (Hz)")
+axs[0, 1].set_ylabel("Magnitude")
+
+# G Major
+axs[1, 0].plot(t, g_major_wave)
+axs[1, 0].set_title("G Major Scale Waveform")
+axs[1, 0].set_xlabel("Time (s)")
+axs[1, 0].set_ylabel("Amplitude")
+
+axs[1, 1].plot(g_major_freqs, g_major_magnitude)
+axs[1, 1].set_title("G Major Scale Spectrum")
+axs[1, 1].set_xlabel("Frequency (Hz)")
+axs[1, 1].set_ylabel("Magnitude")
+
+# E♭ Major
+axs[2, 0].plot(t, eb_major_wave)
+axs[2, 0].set_title("E♭ Major Scale Waveform")
+axs[2, 0].set_xlabel("Time (s)")
+axs[2, 0].set_ylabel("Amplitude")
+
+axs[2, 1].plot(eb_major_freqs, eb_major_magnitude)
+axs[2, 1].set_title("E♭ Major Scale Spectrum")
+axs[2, 1].set_xlabel("Frequency (Hz)")
+axs[2, 1].set_ylabel("Magnitude")
+
+plt.tight_layout()
+plt.show()
