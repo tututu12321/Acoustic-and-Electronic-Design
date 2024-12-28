@@ -1,0 +1,46 @@
+import numpy as np
+import scipy.io.wavfile as wav
+import IPython.display as ipd
+
+# サンプリング周波数と時間の設定
+fs = 44100  # サンプリング周波数（Hz）
+duration = 2  # 各コードの長さ（秒）
+
+# ベースっぽい波形を生成する関数
+def generate_bass_wave(frequency, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    waveform = np.sin(2 * np.pi * frequency * t)  # 基本のサイン波
+    waveform *= np.exp(-t / (duration / 2))  # エンベロープ（音の減衰を滑らかに）
+    return waveform
+
+# IV(M7) → III(7) → VI(m7) → V(m7) → I(7) のコードと対応する周波数（1オクターブ上げ）
+chords = {
+    'Fmaj7': [349.23 * 2, 493.88 * 2, 698.46 * 2, 880.00 * 2],       # F, A, C, E (1オクターブ上げ)
+    'E7': [164.81 * 2, 220.00 * 2, 329.63 * 2, 415.30 * 2, 554.37 * 2], # E, G#, B, D, F# (1オクターブ上げ)
+    'Am7': [220.00 * 2, 261.63 * 2, 349.23 * 2, 440.00 * 2],        # A, C, E, G (1オクターブ上げ)
+    'Gm7': [196.00 * 2, 233.08 * 2, 293.66 * 2, 392.00 * 2],        # G, A#, D, F (1オクターブ上げ)
+    'C7': [261.63 * 2, 349.23 * 2, 440.00 * 2, 554.37 * 2, 698.46 * 2] # C, E, G, B♭, D (1オクターブ上げ)
+}
+
+# 各コードの波形を生成して結合
+combined_wave = np.array([], dtype=np.float32)
+
+# 進行に従ってコードを生成
+progression = ['Fmaj7', 'E7', 'Am7', 'Gm7', 'C7']
+
+for chord_name in progression:
+    chord = chords[chord_name]
+    chord_wave = np.zeros(int(fs * duration))
+    for freq in chord:
+        chord_wave += generate_bass_wave(freq, duration, fs)
+    combined_wave = np.concatenate((combined_wave, chord_wave))
+
+# 正規化して16ビット整数に変換
+combined_wave /= np.max(np.abs(combined_wave))  # 正規化
+combined_wave = np.int16(combined_wave * 32767)   # 16ビット範囲に変換
+
+# .wavファイルとして保存
+wav.write('chord_progression_bass_IV_M7_III_7_VIm7_Vm7_I7.wav', fs, combined_wave)
+
+# Google Colabで音声を再生
+ipd.Audio('chord_progression_bass_IV_M7_III_7_VIm7_Vm7_I7.wav')
