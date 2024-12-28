@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
+
+# Sampling settings
+fs = 44100  # Sampling frequency in Hz
+duration = 2  # Duration in seconds
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# Oscillator: Sine wave generator
+def generate_oscillator_wave(freq, t):
+    return np.sin(2 * np.pi * freq * t)
+
+# Filter: Low-pass Butterworth filter
+def low_pass_filter(data, cutoff, fs, order=5):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return lfilter(b, a, data)
+
+# Amplifier: Simple gain control
+def amplify_signal(data, gain):
+    return data * gain
+
+# Generate oscillator wave
+freq = 440  # Frequency of the oscillator (A4)
+osc_wave = generate_oscillator_wave(freq, t)
+
+# Apply filter
+cutoff_freq = 1000  # Cutoff frequency for the low-pass filter in Hz
+filtered_wave = low_pass_filter(osc_wave, cutoff_freq, fs)
+
+# Apply amplifier
+gain = 2  # Gain factor
+amplified_wave = amplify_signal(filtered_wave, gain)
+
+# Plot results
+fig, axs = plt.subplots(3, 1, figsize=(10, 8))
+
+# Original oscillator wave
+axs[0].plot(t[:1000], osc_wave[:1000])  # Plot first 1000 points
+axs[0].set_title("Oscillator Wave (Sine Wave)")
+axs[0].set_xlabel("Time (s)")
+axs[0].set_ylabel("Amplitude")
+
+# Filtered wave
+axs[1].plot(t[:1000], filtered_wave[:1000])
+axs[1].set_title("Filtered Wave (Low-pass)")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Amplitude")
+
+# Amplified wave
+axs[2].plot(t[:1000], amplified_wave[:1000])
+axs[2].set_title("Amplified Wave")
+axs[2].set_xlabel("Time (s)")
+axs[2].set_ylabel("Amplitude")
+
+plt.tight_layout()
+plt.show()
