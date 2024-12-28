@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# サンプリングレートと音の長さ
+sampling_rate = 44100  # サンプリングレート（Hz）
+duration = 1  # 音の長さ（秒）
+
+# 音を生成する関数（サイン波）
+def generate_tone(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.sin(2 * np.pi * frequency * t)
+    return wave
+
+# 音程とインターバル（C4とE4のメジャー3度）
+def interval_example():
+    frequency_c4 = 261.63  # C4
+    frequency_e4 = 329.63  # E4
+    
+    # 音程（メジャー3度）の音を生成
+    tone_c4 = generate_tone(frequency_c4, duration, sampling_rate)
+    tone_e4 = generate_tone(frequency_e4, duration, sampling_rate)
+    
+    # 波形をプロット
+    plt.figure(figsize=(10, 4))
+    plt.plot(tone_c4[:1000], label="C4")
+    plt.plot(tone_e4[:1000], label="E4", linestyle='--')
+    plt.title("Interval Example (Major Third: C4 to E4)")
+    plt.xlabel("Sample Number")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.show()
+
+# 音階の生成（Cメジャー音階）
+def generate_scale(root_frequency):
+    scale_intervals = [0, 2, 4, 5, 7, 9, 11]  # メジャースケールの半音
+    scale_frequencies = [root_frequency * 2 ** (interval / 12) for interval in scale_intervals]
+    return scale_frequencies
+
+# 音階と調性（Cメジャー音階）
+def scale_example():
+    root_frequency = 261.63  # C4
+    scale_frequencies = generate_scale(root_frequency)
+    
+    print("C Major Scale Frequencies (C4, D4, E4, F4, G4, A4, B4, C5):")
+    print(scale_frequencies)
+    
+    # 音階の波形を生成
+    scale_wave = np.concatenate([generate_tone(f, duration, sampling_rate) for f in scale_frequencies])
+    
+    # 波形をプロット
+    plt.figure(figsize=(10, 4))
+    plt.plot(scale_wave[:1000])
+    plt.title("C Major Scale")
+    plt.xlabel("Sample Number")
+    plt.ylabel("Amplitude")
+    plt.show()
+
+# 和音の生成（Cメジャーコード）
+def chord_example():
+    # Cメジャーコードの音（C4, E4, G4）
+    frequencies = [261.63, 329.63, 392.00]
+    
+    # 和音の波形を生成
+    chord_wave = np.zeros(int(sampling_rate * duration))
+    for frequency in frequencies:
+        chord_wave += generate_tone(frequency, duration, sampling_rate)
+    
+    # 波形をプロット
+    plt.figure(figsize=(10, 4))
+    plt.plot(chord_wave[:1000])
+    plt.title("C Major Chord")
+    plt.xlabel("Sample Number")
+    plt.ylabel("Amplitude")
+    plt.show()
+
+# 音楽の形式（ソナタ形式とロンド形式）
+def music_form_example():
+    # ソナタ形式とロンド形式の基本的なパターンをシミュレート
+    # ソナタ形式は、A（主題）→B（対比）→A（再現）
+    # ロンド形式は、A（主題）→B→A→C→Aの繰り返し
+    
+    # シンプルな音階を使って形式を再現
+    sonata_form = np.concatenate([generate_scale(261.63) for _ in range(2)])  # A → B → A
+    rondo_form = np.concatenate([generate_scale(261.63) for _ in range(3)])  # A → B → A → C → A
+    
+    # 波形をプロット
+    plt.figure(figsize=(10, 4))
+    plt.plot(sonata_form[:1000])
+    plt.title("Sonata Form (A → B → A)")
+    plt.xlabel("Sample Number")
+    plt.ylabel("Amplitude")
+    plt.show()
+    
+    plt.figure(figsize=(10, 4))
+    plt.plot(rondo_form[:1000])
+    plt.title("Rondo Form (A → B → A → C → A)")
+    plt.xlabel("Sample Number")
+    plt.ylabel("Amplitude")
+    plt.show()
+
+# 各シミュレーションを実行
+interval_example()  # 音程とインターバルのシミュレーション
+scale_example()     # 音階と調性のシミュレーション
+chord_example()     # 和音のシミュレーション
+music_form_example()  # 音楽の形式のシミュレーション
