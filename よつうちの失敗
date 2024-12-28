@@ -1,0 +1,59 @@
+# 必要なライブラリをインストール
+!pip install pydub
+!apt-get install ffmpeg -y  # pydubの音声フォーマット変換に必要
+
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# 128 BPMのリズムパターンを生成する関数
+def create_128_bpm_beat():
+    bpm = 128  # ビート・パー・ミニット
+    beat_duration = 60 / bpm  # 1拍の長さ（秒）
+
+    sampling_rate = 44100  # サンプリングレート
+    duration_in_seconds = 4 * beat_duration  # 1小節分の長さ
+    t = np.linspace(0, duration_in_seconds, int(sampling_rate * duration_in_seconds), endpoint=False)  # 時間軸
+
+    # キック音（ドのサイン波 C: 261.63Hz）
+    kick_frequency = 261.63  # ドの周波数
+    kick_wave = Sine(kick_frequency).to_audio_segment(duration=int(beat_duration * 1000))  # サイン波
+    kick_wave = kick_wave.fade_out(300)  # 減衰させる（音の終わりに向けてフェードアウト）
+
+    # スネア音（レのサイン波 D: 293.66Hz）
+    snare_frequency = 293.66  # レの周波数
+    snare_wave = Sine(snare_frequency).to_audio_segment(duration=int(beat_duration * 500))  # サイン波
+    snare_wave = snare_wave.fade_in(10).fade_out(100)  # フェードイン・フェードアウトを追加
+
+    # ハイハット音（ソのサイン波 G: 392.00Hz）
+    hihat_frequency = 392.00  # ソの周波数
+    hihat_wave = Sine(hihat_frequency).to_audio_segment(duration=int(beat_duration * 200))  # サイン波
+    hihat_wave = hihat_wave.fade_in(5).fade_out(30)  # ハイハットにフェードイン・フェードアウトを追加
+
+    # 音の調整（16ビット整数型に変換）
+    loop_audio = (np.sin(2 * np.pi * kick_frequency * t) * 32767).astype(np.int16)
+
+    # トラックを作成
+    track = AudioSegment.silent(duration=int(beat_duration * 4000))  # 1小節分の静かな部分
+
+    # キックの配置（1小節内で4回）
+    for i in range(4):
+        track = track.overlay(kick_wave, position=int(i * beat_duration * 1000))
+
+    # スネアの配置（2拍目と4拍目）
+    track = track.overlay(snare_wave, position=int(beat_duration * 1000))  # 2拍目
+    track = track.overlay(snare_wave, position=int(beat_duration * 3000))  # 4拍目
+
+    # ハイハットの配置（裏拍に配置）
+    for i in range(1, 4):
+        track = track.overlay(hihat_wave, position=int(beat_duration * i * 1000))
+
+    # 音声ファイルを保存
+    track.export("4_on_the_floor_with_decay.wav", format="wav")
+
+    # 音声を再生
+    return Audio("4_on_the_floor_with_decay.wav", rate=sampling_rate)
+
+# 音声を再生
+create_128_bpm_beat()
