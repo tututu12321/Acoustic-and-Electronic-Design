@@ -1,0 +1,61 @@
+import spacy
+from gensim.models import Word2Vec
+import matplotlib.pyplot as plt
+
+# Load the spaCy model for English
+nlp = spacy.load("en_core_web_sm")
+
+# Text for analysis
+text = """
+The young man with a blank expression walks through the student district at night.
+His vomit, one glove, and a discarded sign—the woman murmurs.
+"Do you know the sorrow of the world?" saru no gakusei-san.
+
+The young man with a blank expression walks through the student district at night.
+His vomit, one glove, and the night that tears at the eardrum like a sickle.
+A corpse flowing down the winter Yodogawa River, saru no gakusei-san.
+
+He seems to know the games I don’t,
+and suddenly I feel empty. The monkey student is doing bad things.
+Swallowed by the atmosphere of a great snake, laughing, saru no gakusei-san.
+
+The monkeys, as usual, start a fight on their own.
+Three people, including the mediator. The display of manliness is so obvious, it’s painful to watch.
+Saru no gakusei-san.
+
+He seems to have values I can’t understand,
+and suddenly I want to die. The monkey’s welcome party, a club or something,
+spinning around with just one Kibi Dango. Saru no gakusei-san.
+
+The young man with a blank expression walks through the student district at night.
+"Do you know the sorrow of the world?" saru no gakusei-san.
+
+The monkey student is doing bad things. Swallowed by the atmosphere of a great snake, laughing, saru no gakusei-san.
+The lovestruck student looks at the red moon and catches the vivid girl. Saru no gakusei-san.
+"""
+
+# Tokenization using spaCy
+doc = nlp(text)
+tokens = [token.text for token in doc]
+
+# Train Word2Vec model on the tokenized text
+model = Word2Vec([tokens], vector_size=2, window=5, min_count=1, sg=0)  # 2D vectors
+
+# Get the vector coordinates for each word
+word_vectors = {word: model.wv[word] for word in model.wv.index_to_key}
+
+# Display the vectors (coordinates) of words
+print("Word Vectors (2D coordinates):")
+for word, vector in word_vectors.items():
+    print(f"{word}: {vector}")
+
+# Plotting the 2D vectors
+plt.figure(figsize=(10, 8))
+for word, vector in word_vectors.items():
+    plt.text(vector[0], vector[1], word, fontsize=12)
+
+plt.title("2D Word Vectors")
+plt.xlabel("Dimension 1")
+plt.ylabel("Dimension 2")
+plt.grid(True)
+plt.show()
