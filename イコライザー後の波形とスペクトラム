@@ -1,0 +1,92 @@
+import numpy as np
+import scipy.signal as signal
+import matplotlib.pyplot as plt
+import soundfile as sf
+
+# ダミーデータの生成（サンプリング周波数と信号の長さを設定）
+sr = 44100  # サンプリング周波数
+duration = 5  # 信号の長さ（秒）
+t = np.linspace(0, duration, int(sr * duration), endpoint=False)  # 時間軸
+
+# 「ド」の音（261.63Hz）の正弦波を生成
+audio = np.sin(2 * np.pi * 261.63 * t) + 0.5 * np.random.randn(len(t))  # 「ド」の音（261.63Hz）
+
+# イコライザー設定 (3帯域：低音、中音、高音)
+def equalizer(audio, sr, bass_gain=1.5, mid_gain=1.0, treble_gain=1.2):
+    # 低音フィルタ
+    bass_filter = signal.butter(4, [20, 200], btype='bandpass', fs=sr)
+    bass_audio = signal.filtfilt(bass_filter[0], bass_filter[1], audio)
+    bass_audio *= bass_gain  # ゲイン調整
+    
+    # 中音フィルタ
+    mid_filter = signal.butter(4, [200, 2000], btype='bandpass', fs=sr)
+    mid_audio = signal.filtfilt(mid_filter[0], mid_filter[1], audio)
+    mid_audio *= mid_gain  # ゲイン調整
+    
+    # 高音フィルタ
+    treble_filter = signal.butter(4, [2000, 20000], btype='bandpass', fs=sr)
+    treble_audio = signal.filtfilt(treble_filter[0], treble_filter[1], audio)
+    treble_audio *= treble_gain  # ゲイン調整
+    
+    # 合成
+    output_audio = bass_audio + mid_audio + treble_audio
+    return bass_audio, mid_audio, treble_audio, output_audio
+
+# イコライザーを適用したオーディオ信号
+bass_audio, mid_audio, treble_audio, processed_audio = equalizer(audio, sr)
+
+# スペクトラムアナライザー（FFT）
+def plot_spectrum(audio, sr, title='Spectrum', ax=None):
+    # FFTを計算
+    N = len(audio)
+    freqs = np.fft.fftfreq(N, 1 / sr)
+    spectrum = np.fft.fft(audio)
+    
+    # 正の周波数のみをプロット
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(freqs[:N // 2], np.abs(spectrum)[:N // 2])
+    ax.set_title(title)
+    ax.set_xlabel('Frequency [Hz]')
+    ax.set_ylabel('Amplitude')
+    ax.grid(True)
+
+# 波形プロット
+def plot_waveform(audio, t, title='Waveform', ax=None):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(t, audio)
+    ax.set_title(title)
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('Amplitude')
+    ax.grid(True)
+
+# プロットの作成
+fig, axes = plt.subplots(4, 2, figsize=(12, 16))
+
+# オリジナルの波形とスペクトラム
+plot_waveform(audio, t, 'Original Waveform (Do)', ax=axes[0, 0])
+plot_spectrum(audio, sr, 'Original Spectrum (Do)', ax=axes[0, 1])
+
+# 低音の波形とスペクトラム
+plot_waveform(bass_audio, t, 'Bass Waveform', ax=axes[1, 0])
+plot_spectrum(bass_audio, sr, 'Bass Spectrum', ax=axes[1, 1])
+
+# 中音の波形とスペクトラム
+plot_waveform(mid_audio, t, 'Mid Waveform', ax=axes[2, 0])
+plot_spectrum(mid_audio, sr, 'Mid Spectrum', ax=axes[2, 1])
+
+# 高音の波形とスペクトラム
+plot_waveform(treble_audio, t, 'Treble Waveform', ax=axes[3, 0])
+plot_spectrum(treble_audio, sr, 'Treble Spectrum', ax=axes[3, 1])
+
+# イコライザー後の波形とスペクトラム
+plot_waveform(processed_audio, t, 'Processed Waveform (Do)', ax=axes[3, 0])
+plot_spectrum(processed_audio, sr, 'Processed Spectrum (Do)', ax=axes[3, 1])
+
+# プロットの表示
+plt.tight_layout()
+plt.show()
+
+# イコライザー後のオーディオを保存
+sf.write('processed_audio.wav', processed_audio, sr)
