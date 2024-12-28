@@ -1,0 +1,32 @@
+from collections import Counter
+import re
+
+# Provided text
+text = """
+A student in a suit, a middle-aged man laughing crudely, a woman, and an elderly person. A place where chaotic noise is on the verge of madness. In the gambling hall, even the meaning of entertainment is being drowned out.
+
+The irritated regulars are ignored, while the first-timers win big by sheer luck. Over the intercom comes a voice, "Still buying even in spring?" A deep sense of disillusionment washes over me.
+
+And then, the moment when three sevens line up. The voices of fanatical believers echo like feedback. The sound of bills being shredded by a sand machine fills the air.
+
+Slow down. Pachinko has an unsettling sense of an insidious, miserly monster lurking somewhere, breeding unease. The title of the gambling hall that accepts prepaid cards is CR, and it drags you into a human drama, and before you know it, you are swept into its vortex. Around me, I’m warned, "Move, you're in the way..." as they laugh like a school of rotten fish. A spoon, thrown in vengeful rage, lands at my feet, and I pick it up.
+
+I always wear the expression of "moratorium." Conversations sound like noise, and even though I can't hear them, I nod and laugh reflexively.
+
+Like mosquito larvae or water striders, everyone crawls through the world of the night. The patterns of the people in CR are nothing more than reduced versions of their personalities, simplified into ABO blood types.
+
+365 spins, losing, unable to win, and eventually bankrupt. And in a way, my life is quite similar to theirs. That's it, I’ll go to a pachinko parlor no one knows about. CR108. The desires for sex, food, and sleep remain unfulfilled, and the endless days continue.
+"""
+
+# Text preprocessing (removing punctuation, converting to lowercase)
+text_cleaned = re.sub(r'[^\w\s]', '', text.lower())
+
+# Tokenize the text into words
+words = text_cleaned.split()
+
+# Count the frequency of each word
+word_counts = Counter(words)
+
+# Display the word frequencies
+word_counts.most_common(10)  # Top 10 most common words
+
