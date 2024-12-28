@@ -1,0 +1,118 @@
+import numpy as np
+from scipy.io.wavfile import write
+from IPython.display import Audio
+import shutil
+from google.colab import files
+
+# 音楽のテンポと音符の長さに関する定義
+tempo = 120  # テンポ120 BPM
+beats_per_second = tempo / 60  # 1秒あたりの拍数
+
+# サンプリングレートと音符の基本的なパラメータ
+sampling_rate = 44100  # サンプリングレート（Hz）
+duration_of_beat = 1 / beats_per_second  # 1拍の長さ（秒）
+
+# 音符の長さを計算（秒）
+whole_note_duration = 4 * duration_of_beat  # 全音符（4拍）
+half_note_duration = 2 * duration_of_beat   # 2分音符（2拍）
+quarter_note_duration = duration_of_beat    # 4分音符（1拍）
+eighth_note_duration = duration_of_beat / 2 # 8分音符（半拍）
+sixteenth_note_duration = duration_of_beat / 4  # 16分音符（4分の1拍）
+
+# ドラム音を生成するためのインパルス波形を作成する関数
+def generate_drum_tone(frequency, duration, sampling_rate, envelope=None):
+    # 基本的な波形（鋭い立ち上がりと急激な減衰）
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.zeros_like(t)
+    
+    # 短い矩形波でドラム音のような音を生成
+    wave[t < duration / 5] = 1  # 最初の1/5で鋭いインパルス音
+    wave[t > duration * 0.8] = 0  # 最後の部分は0にして減衰
+
+    # エンベロープ（音の減衰）を加える場合
+    if envelope is not None:
+        wave *= envelope(t)
+
+    return wave
+
+# 簡単なエンベロープ関数（音の立ち上がりと減衰）
+def basic_envelope(t, attack=0.01, release=0.2, max_amp=1):
+    # 音の立ち上がりと減衰
+    env = np.zeros_like(t)
+    env[t < attack] = max_amp * (t[t < attack] / attack)
+    env[t > (1 - release)] = max_amp * ((1 - t[t > (1 - release)]) / release)
+    return env
+
+# ギターの音の周波数（例）
+frequency = 440  # A4の周波数（Hz）
+
+# ドラム音の生成（スネアやキックドラムの簡易モデル）
+whole_note_wave = generate_drum_tone(frequency, whole_note_duration, sampling_rate, envelope=basic_envelope)
+half_note_wave = generate_drum_tone(frequency, half_note_duration, sampling_rate, envelope=basic_envelope)
+quarter_note_wave = generate_drum_tone(frequency, quarter_note_duration, sampling_rate, envelope=basic_envelope)
+eighth_note_wave = generate_drum_tone(frequency, eighth_note_duration, sampling_rate, envelope=basic_envelope)
+sixteenth_note_wave = generate_drum_tone(frequency, sixteenth_note_duration, sampling_rate, envelope=basic_envelope)
+
+# 各音符のWAVファイルを保存
+whole_note_file = "whole_note_drum.wav"
+half_note_file = "half_note_drum.wav"
+quarter_note_file = "quarter_note_drum.wav"
+eighth_note_file = "eighth_note_drum.wav"
+sixteenth_note_file = "sixteenth_note_drum.wav"
+
+write(whole_note_file, sampling_rate, (whole_note_wave * 32767).astype(np.int16))
+write(half_note_file, sampling_rate, (half_note_wave * 32767).astype(np.int16))
+write(quarter_note_file, sampling_rate, (quarter_note_wave * 32767).astype(np.int16))
+write(eighth_note_file, sampling_rate, (eighth_note_wave * 32767).astype(np.int16))
+write(sixteenth_note_file, sampling_rate, (sixteenth_note_wave * 32767).astype(np.int16))
+
+# 各音符を5秒間再生するように調整
+def adjust_duration(wave, target_duration=5, sampling_rate=44100):
+    # 目標の再生時間（秒）に合わせて音声をリピートまたはカット
+    num_samples = target_duration * sampling_rate
+    if len(wave) < num_samples:
+        # 音声が短い場合、繰り返しで長さを調整
+        repeat_factor = (num_samples // len(wave)) + 1
+        wave = np.tile(wave, repeat_factor)[:num_samples]
+    else:
+        # 音声が長い場合、カットして調整
+        wave = wave[:num_samples]
+    return wave
+
+# 5秒間の長さに調整
+whole_note_wave = adjust_duration(whole_note_wave)
+half_note_wave = adjust_duration(half_note_wave)
+quarter_note_wave = adjust_duration(quarter_note_wave)
+eighth_note_wave = adjust_duration(eighth_note_wave)
+sixteenth_note_wave = adjust_duration(sixteenth_note_wave)
+
+# 各音符を5秒間再生するためのWAVファイルを保存
+write(whole_note_file, sampling_rate, (whole_note_wave * 32767).astype(np.int16))
+write(half_note_file, sampling_rate, (half_note_wave * 32767).astype(np.int16))
+write(quarter_note_file, sampling_rate, (quarter_note_wave * 32767).astype(np.int16))
+write(eighth_note_file, sampling_rate, (eighth_note_wave * 32767).astype(np.int16))
+write(sixteenth_note_file, sampling_rate, (sixteenth_note_wave * 32767).astype(np.int16))
+
+# 音声の再生
+Audio(whole_note_file)  # 全音符の再生
+Audio(half_note_file)   # 2分音符の再生
+Audio(quarter_note_file)  # 4分音符の再生
+Audio(eighth_note_file)   # 8分音符の再生
+Audio(sixteenth_note_file)  # 16分音符の再生
+
+# 各音符のファイルをGoogle Colabでダウンロードできるようにする
+shutil.move(whole_note_file, '/content/' + whole_note_file)
+shutil.move(half_note_file, '/content/' + half_note_file)
+shutil.move(quarter_note_file, '/content/' + quarter_note_file)
+shutil.move(eighth_note_file, '/content/' + eighth_note_file)
+shutil.move(sixteenth_note_file, '/content/' + sixteenth_note_file)
+
+# ダウンロードリンクの作成
+files.download('/content/' + whole_note_file)
+files.download('/content/' + half_note_file)
+files.download('/content/' + quarter_note_file)
+files.download('/content/' + eighth_note_file)
+files.download('/content/' + sixteenth_note_file)
+
+# 結果の表示
+print("各音符の音声ファイルが保存され、ダウンロード可能です。")
