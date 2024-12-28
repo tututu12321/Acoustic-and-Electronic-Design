@@ -1,0 +1,140 @@
+import numpy as np
+from pydub import AudioSegment
+from pydub.generators import Sine
+from IPython.display import Audio
+
+# サンプリングレートと周波数設定
+sampling_rate = 44100
+kick_frequency = 261.63  # ドの周波数（C）
+
+# サイン波（ド）
+def generate_sine_wave(frequency, duration_seconds, sampling_rate):
+    t = np.linspace(0, duration_seconds, int(sampling_rate * duration_seconds), endpoint=False)
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+    return sine_wave
+
+# サイン波の生成（ド）
+sine_wave = generate_sine_wave(kick_frequency, 2, sampling_rate)  # 2秒のサイン波（ド）
+
+# エフェクトの実装
+def apply_overdrive(audio, gain=10):
+    """オーバードライブエフェクト"""
+    audio = audio * gain
+    audio = np.clip(audio, -1, 1)  # 音量のクリッピング
+    return audio
+
+def apply_wah_wah(audio, frequency=0.5, depth=1.0, rate=5.0):
+    """ワウペダルエフェクト"""
+    t = np.linspace(0, len(audio) / sampling_rate, len(audio))
+    wah = 1 + depth * np.sin(2 * np.pi * rate * t)  # ワウの動き
+    return audio * wah
+
+def apply_chorus(audio, rate=1.5, depth=0.7):
+    """コーラスエフェクト"""
+    t = np.linspace(0, len(audio) / sampling_rate, len(audio))
+    chorus = 1 + depth * np.sin(2 * np.pi * rate * t)  # コーラスの動き
+    return audio * chorus
+
+def apply_pitch_shifter(audio, shift=2):
+    """ビッチシフターエフェクト"""
+    # ピッチシフトには時間伸縮を使う
+    shift_factor = 2 ** (shift / 12)  # 半音のシフト
+    audio = np.interp(np.arange(0, len(audio), shift_factor), np.arange(0, len(audio)), audio)
+    return audio[:len(audio)]  # 音の長さを元に戻す
+
+def apply_reverb(audio, decay=0.5, delay=0.2):
+    """リバーブエフェクト（残響）"""
+    delay_samples = int(delay * sampling_rate)
+    reverb_audio = np.copy(audio)
+    for i in range(delay_samples, len(audio)):
+        reverb_audio[i] += decay * audio[i - delay_samples]
+    return reverb_audio
+
+def apply_compressor(audio, threshold=0.5, ratio=4):
+    """コンプレッサーエフェクト"""
+    audio = np.clip(audio, -1, 1)
+    compressed_audio = np.copy(audio)
+    for i in range(len(audio)):
+        if np.abs(audio[i]) > threshold:
+            compressed_audio[i] = threshold + (audio[i] - threshold) / ratio
+    return compressed_audio
+
+def apply_phaser(audio, rate=1.0, depth=1.0):
+    """フェイザーエフェクト"""
+    t = np.linspace(0, len(audio) / sampling_rate, len(audio))
+    phase = 1 + depth * np.sin(2 * np.pi * rate * t)  # フェイズの変動
+    return audio * phase
+
+def apply_plunger(audio, rate=0.1, depth=0.5):
+    """プランジャーエフェクト"""
+    t = np.linspace(0, len(audio) / sampling_rate, len(audio))
+    plunger = 1 + depth * np.sin(2 * np.pi * rate * t)  # プランジャーの変動
+    return audio * plunger
+
+def apply_delay(audio, delay_ms=500, feedback=0.5):
+    """ディレイエフェクト"""
+    delay_samples = int(delay_ms * sampling_rate / 1000)
+    delayed_audio = np.copy(audio)
+    for i in range(delay_samples, len(audio)):
+        delayed_audio[i] += feedback * audio[i - delay_samples]
+    return delayed_audio
+
+def apply_noise_gate(audio, threshold=0.05):
+    """ノイズゲートエフェクト"""
+    return np.where(np.abs(audio) > threshold, audio, 0)
+
+def apply_amplifier(audio, amplification_factor=2):
+    """増幅エフェクト"""
+    amplified_audio = audio * amplification_factor
+    # 増幅後、音量がクリッピングされないように制限
+    amplified_audio = np.clip(amplified_audio, -1, 1)
+    return amplified_audio
+
+# 各エフェクトを適用し、個別に保存して再生
+def apply_and_save_effects(audio, effect_name):
+    """エフェクトを適用して、結果を保存する"""
+    print(f"Applying {effect_name} effect...")  # エフェクト名を表示
+
+    effect_audio = audio
+    if effect_name == "overdrive":
+        effect_audio = apply_overdrive(audio)
+    elif effect_name == "wah_wah":
+        effect_audio = apply_wah_wah(audio)
+    elif effect_name == "chorus":
+        effect_audio = apply_chorus(audio)
+    elif effect_name == "pitch_shifter":
+        effect_audio = apply_pitch_shifter(audio)
+    elif effect_name == "reverb":
+        effect_audio = apply_reverb(audio)
+    elif effect_name == "compressor":
+        effect_audio = apply_compressor(audio)
+    elif effect_name == "phaser":
+        effect_audio = apply_phaser(audio)
+    elif effect_name == "plunger":
+        effect_audio = apply_plunger(audio)
+    elif effect_name == "delay":
+        effect_audio = apply_delay(audio)
+    elif effect_name == "noise_gate":
+        effect_audio = apply_noise_gate(audio)
+    elif effect_name == "amplifier":
+        effect_audio = apply_amplifier(audio)
+
+    # 結果をAudioSegmentに変換
+    effect_audio_segment = AudioSegment(
+        (effect_audio * 32767).astype(np.int16).tobytes(), 
+        frame_rate=sampling_rate, 
+        sample_width=2, 
+        channels=1
+    )
+    effect_audio_segment.export(f"{effect_name}_output.wav", format="wav")
+    print(f"{effect_name} effect applied and saved as {effect_name}_output.wav")
+    return Audio(f"{effect_name}_output.wav")
+
+# エフェクトを個別に適用して再生
+effects = [
+    "overdrive", "wah_wah", "chorus", "pitch_shifter", "reverb", 
+    "compressor", "phaser", "plunger", "delay", "noise_gate", "amplifier"
+]
+
+for effect in effects:
+    display(apply_and_save_effects(sine_wave, effect))
