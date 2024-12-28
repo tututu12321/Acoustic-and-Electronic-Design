@@ -1,0 +1,61 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import write
+from IPython.display import Audio
+
+# サンプリングレートと音の長さ
+sampling_rate = 44100  # サンプリングレート（Hz）
+duration = 2  # 音の長さ（秒）
+
+# ドの音（C4）の周波数
+frequency_c4 = 261.63  # C4の周波数（Hz）
+
+# 音程を計算するための基本的な関数（ドの音、C4の周波数）
+def generate_tone(frequency, duration, sampling_rate):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = np.sin(2 * np.pi * frequency * t)  # サイン波
+    return wave
+
+# ディレイを加える関数
+def apply_delay(signal, delay_time, feedback, sampling_rate):
+    delay_samples = int(delay_time * sampling_rate)  # サンプル数に変換
+    delayed_signal = np.zeros(len(signal) + delay_samples)  # ディレイ後の信号
+    delayed_signal[:len(signal)] = signal
+    
+    for i in range(delay_samples, len(delayed_signal)):
+        delayed_signal[i] += feedback * delayed_signal[i - delay_samples]
+    
+    return delayed_signal[:len(signal)]  # 元の長さに戻す
+
+# 音符の定義（ドの音、C4 = 261.63Hz）
+note_duration = 0.5  # 8分音符の長さ（0.5秒）
+note = generate_tone(frequency_c4, note_duration, sampling_rate)
+
+# 付点8分音符の長さ（0.75秒）
+dotted_eighth_note_duration = 0.75
+dotted_eighth_note = generate_tone(frequency_c4, dotted_eighth_note_duration, sampling_rate)
+
+# 8分フレーズ + 付点8分ディレイ（8分フレーズの音符とディレイ効果を適用）
+signal = np.concatenate([note, dotted_eighth_note])  # フレーズ
+
+# ディレイ設定
+delay_time = 0.375  # 付点8分音符に対応するディレイ時間（秒）
+feedback = 0.5  # フィードバック（50%）
+
+# ディレイを適用
+signal_with_delay = apply_delay(signal, delay_time, feedback, sampling_rate)
+
+# WAVファイルとして保存
+output_file = "delayed_signal.wav"
+write(output_file, sampling_rate, np.int16(signal_with_delay * 32767))  # WAV形式で保存
+
+# 波形をプロット
+plt.figure(figsize=(10, 4))
+plt.plot(signal_with_delay[:1000])
+plt.title("Signal with Delay (8th and Dotted 8th Note)")
+plt.xlabel("Sample Number")
+plt.ylabel("Amplitude")
+plt.show()
+
+# Google Colabで音声を再生
+Audio(output_file)
