@@ -1,0 +1,57 @@
+# 必要なライブラリをインストール
+!pip install numpy scipy matplotlib
+
+# ライブラリのインポート
+import numpy as np
+from scipy.io.wavfile import write
+from IPython.display import Audio, display
+import matplotlib.pyplot as plt
+
+# ピアノ風の音を作成する関数
+def generate_piano_note(frequency, duration, sampling_rate=44100):
+    """
+    ピアノ風の音を生成する関数
+    frequency: 音の周波数 (Hz)
+    duration: 音の長さ (秒)
+    sampling_rate: サンプリングレート (デフォルト 44100 Hz)
+    """
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    waveform = 0.6 * np.sin(2 * np.pi * frequency * t)  # 基本波
+    waveform += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)  # 高調波1
+    waveform += 0.1 * np.sin(2 * np.pi * frequency * 3 * t)  # 高調波2
+    waveform *= np.exp(-t / (duration / 5))  # 音の減衰
+    return waveform
+
+# パラメータ設定
+sampling_rate = 44100  # サンプリングレート
+note_duration = 0.5  # 各音の長さ (秒)
+chord_frequencies = [261.63, 329.63, 392.00]  # C4, E4, G4 (ド, ミ, ソ)
+
+# アルペジオ音を生成 (順番に鳴らす)
+arpeggio_wave = np.array([], dtype=np.float32)
+for freq in chord_frequencies:
+    note = generate_piano_note(freq, note_duration, sampling_rate)
+    arpeggio_wave = np.concatenate((arpeggio_wave, note))
+
+# 和音音を生成 (同時に鳴らす)
+chord_wave = np.zeros(int(note_duration * sampling_rate), dtype=np.float32)
+for freq in chord_frequencies:
+    chord_wave += generate_piano_note(freq, note_duration, sampling_rate)
+chord_wave /= len(chord_frequencies)  # 正規化
+
+# アルペジオと和音の波形を結合 (比較用)
+comparison_wave = np.concatenate((arpeggio_wave, np.zeros(int(sampling_rate * 0.5)), chord_wave))
+
+# 波形を保存
+write("comparison.wav", sampling_rate, (comparison_wave * 32767).astype(np.int16))
+
+# 波形をプロット
+plt.figure(figsize=(10, 5))
+plt.plot(comparison_wave[:3000])  # 最初の3000サンプルを表示
+plt.title("Arpeggio (Left) and Chord (Right) Waveform")
+plt.xlabel("Time [samples]")
+plt.ylabel("Amplitude")
+plt.show()
+
+# 音声を再生
+display(Audio("comparison.wav", rate=sampling_rate))
