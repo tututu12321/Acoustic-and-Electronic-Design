@@ -1,0 +1,101 @@
+# 必要なライブラリをインストール
+!pip install numpy scipy matplotlib simpleaudio
+
+# ライブラリのインポート
+import numpy as np
+from scipy.io.wavfile import write
+from IPython.display import Audio, display
+import matplotlib.pyplot as plt
+
+# 基本設定
+sampling_rate = 44100  # サンプリングレート (Hz)
+bar_duration = 4.0  # 全体の長さ（秒）
+total_steps = 16  # リズムのステップ数（1小節に4拍×4小節）
+
+# 楽器音の生成
+def generate_bass_drum():
+    t = np.linspace(0, 0.3, int(sampling_rate * 0.3), endpoint=False)
+    wave = 0.8 * np.sin(2 * np.pi * 60 * t) * np.exp(-t * 15)  # 低周波の減衰
+    noise = 0.3 * np.random.normal(0, 1, len(t)) * np.exp(-t * 25)  # 高周波ノイズ
+    return wave + noise
+
+def generate_snare_drum():
+    t = np.linspace(0, 0.2, int(sampling_rate * 0.2), endpoint=False)
+    noise = 0.5 * np.random.normal(0, 1, len(t)) * np.exp(-t * 20)  # ホワイトノイズ
+    tone = 0.2 * np.sin(2 * np.pi * 200 * t) * np.exp(-t * 20)  # 高周波トーン
+    return noise + tone
+
+def generate_hihat_open():
+    t = np.linspace(0, 0.4, int(sampling_rate * 0.4), endpoint=False)
+    noise = 0.5 * np.random.normal(0, 1, len(t)) * np.exp(-t * 50)  # 高周波ノイズ
+    return noise
+
+def generate_hihat_close():
+    t = np.linspace(0, 0.1, int(sampling_rate * 0.1), endpoint=False)
+    noise = 0.5 * np.random.normal(0, 1, len(t)) * np.exp(-t * 100)  # 高周波ノイズ
+    return noise
+
+# 各楽器音を生成
+bass_drum = generate_bass_drum()
+snare_drum = generate_snare_drum()
+hihat_open = generate_hihat_open()
+hihat_close = generate_hihat_close()
+
+# リズムパターン
+bass_pattern = [1, 0, 0, 0] * 4
+snare_pattern = [0, 0, 1, 0] * 4
+hihat_open_pattern = [0, 0, 1, 0] * 4
+hihat_close_pattern = [1, 0, 0, 0] * 4
+
+# 単独のリズム波形生成
+def create_pattern_wave(pattern, sound):
+    total_samples = int(sampling_rate * bar_duration)
+    wave = np.zeros(total_samples)
+    step_samples = total_samples // total_steps  # ステップごとのサンプル数
+
+    for i, p in enumerate(pattern):
+        if p == 1:
+            start_idx = i * step_samples
+            end_idx = min(start_idx + len(sound), total_samples)
+            wave[start_idx:end_idx] += sound[:end_idx - start_idx]
+
+    # 波形をクリップしてスケール調整
+    return np.clip(wave, -1, 1)
+
+# 各楽器の波形を作成
+bass_drum_wave = create_pattern_wave(bass_pattern, bass_drum)
+snare_drum_wave = create_pattern_wave(snare_pattern, snare_drum)
+hihat_open_wave = create_pattern_wave(hihat_open_pattern, hihat_open)
+hihat_close_wave = create_pattern_wave(hihat_close_pattern, hihat_close)
+
+# 合成音の生成
+def combine_all_sounds():
+    combined_wave = bass_drum_wave + snare_drum_wave + hihat_open_wave + hihat_close_wave
+    # 波形をクリップしてスケール調整
+    return np.clip(combined_wave, -1, 1)
+
+# 合成音を生成
+combined_sound = combine_all_sounds()
+
+# 各波形を保存
+write("bass_drum_pattern.wav", sampling_rate, (bass_drum_wave * 32767).astype(np.int16))
+write("snare_drum_pattern.wav", sampling_rate, (snare_drum_wave * 32767).astype(np.int16))
+write("hihat_open_pattern.wav", sampling_rate, (hihat_open_wave * 32767).astype(np.int16))
+write("hihat_close_pattern.wav", sampling_rate, (hihat_close_wave * 32767).astype(np.int16))
+write("combined_rhythm.wav", sampling_rate, (combined_sound * 32767).astype(np.int16))
+
+# 各音を再生
+print("Bass Drum Pattern:")
+display(Audio("bass_drum_pattern.wav", rate=sampling_rate))
+
+print("Snare Drum Pattern:")
+display(Audio("snare_drum_pattern.wav", rate=sampling_rate))
+
+print("Hi-hat (Open) Pattern:")
+display(Audio("hihat_open_pattern.wav", rate=sampling_rate))
+
+print("Hi-hat (Close) Pattern:")
+display(Audio("hihat_close_pattern.wav", rate=sampling_rate))
+
+print("Combined Rhythm (4秒間):")
+display(Audio("combined_rhythm.wav", rate=sampling_rate))
