@@ -1,0 +1,98 @@
+# 必要なライブラリをインストール
+!pip install numpy scipy matplotlib librosa
+
+# ライブラリのインポート
+import numpy as np
+from scipy.io.wavfile import write
+from IPython.display import Audio, display
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+
+# ピアノ風の音を作成する関数
+def generate_piano_note(frequency, duration, sampling_rate=44100):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    waveform = 0.6 * np.sin(2 * np.pi * frequency * t)
+    waveform += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)
+    waveform += 0.1 * np.sin(2 * np.pi * frequency * 3 * t)
+    waveform *= np.exp(-t / (duration / 5))
+    return waveform
+
+# 音階の周波数データ
+note_frequencies = {
+    "C": 261.63, "D": 293.66, "E": 329.63, "F": 349.23, "G": 392.00,
+    "lowG": 196.00, "Eb": 311.13, "lowBb": 233.08
+}
+
+# パラメータ設定
+sampling_rate = 44100
+note_duration = 0.8
+silence_duration = 0.1
+inter_arpeggio_silence_duration = 1.0
+
+# アルペジオ
+arpeggio1_notes = ["G", "F", "Eb", "D", "lowBb", "lowG"]
+arpeggio2_notes = ["C", "D", "E", "F", "D"]
+
+silence = np.zeros(int(silence_duration * sampling_rate), dtype=np.float32)
+inter_arpeggio_silence = np.zeros(int(inter_arpeggio_silence_duration * sampling_rate), dtype=np.float32)
+
+# アルペジオ1
+arpeggio1_wave = np.array([], dtype=np.float32)
+for note in arpeggio1_notes:
+    frequency = note_frequencies[note]
+    wave = generate_piano_note(frequency, note_duration, sampling_rate)
+    arpeggio1_wave = np.concatenate((arpeggio1_wave, wave, silence))
+
+# アルペジオ2
+arpeggio2_wave = np.array([], dtype=np.float32)
+for note in arpeggio2_notes:
+    frequency = note_frequencies[note]
+    wave = generate_piano_note(frequency, note_duration, sampling_rate)
+    arpeggio2_wave = np.concatenate((arpeggio2_wave, wave, silence))
+
+# 結合
+combined_wave = np.concatenate((arpeggio1_wave, inter_arpeggio_silence, arpeggio2_wave))
+write("arpeggio_with_silence_and_fft.wav", sampling_rate, (combined_wave * 32767).astype(np.int16))
+
+# 波形をプロット
+plt.figure(figsize=(10, 4))
+plt.plot(combined_wave[:5000])  # 最初の5000サンプルを表示
+plt.title("Arpeggio 1 and 2 Waveform with Adjustable Silence")
+plt.xlabel("Time [samples]")
+plt.ylabel("Amplitude")
+plt.show()
+
+# 音声を再生
+display(Audio("arpeggio_with_silence_and_fft.wav", rate=sampling_rate))
+
+# FFT（高速フーリエ変換）で周波数解析
+fft_data = np.fft.fft(combined_wave)
+frequencies = np.fft.fftfreq(len(fft_data), d=1/sampling_rate)
+magnitude = np.abs(fft_data)
+
+# 正の周波数のみプロット
+plt.figure(figsize=(10, 4))
+plt.plot(frequencies[:len(frequencies)//2], magnitude[:len(magnitude)//2])
+plt.title("Frequency Spectrum (FFT)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.grid()
+plt.show()
+
+# スペクトログラム解析
+y, sr = librosa.load("arpeggio_with_silence_and_fft.wav", sr=sampling_rate)
+plt.figure(figsize=(10, 4))
+librosa.display.specshow(librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max), 
+                         sr=sr, x_axis='time', y_axis='log')
+plt.title("Spectrogram")
+plt.colorbar(format="%+2.0f dB")
+plt.show()
+
+# ピッチ（周波数ピーク）解析
+peak_frequency = frequencies[np.argmax(magnitude[:len(magnitude)//2])]
+print(f"Peak Frequency (Pitch): {peak_frequency:.2f} Hz")
+
+# テンポ解析
+tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+print(f"Estimated Tempo: {tempo:.2f} BPM")
