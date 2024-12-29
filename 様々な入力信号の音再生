@@ -1,9 +1,10 @@
+# 必要なライブラリのインポート
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 from scipy.signal import sawtooth, square
-from IPython.display import Audio
-import time
+from IPython.display import Audio, display
+from scipy.io.wavfile import write
 
 # 基本設定
 sampling_rate = 44100  # サンプリングレート
@@ -75,17 +76,33 @@ def plot_waveform_and_fft(waveforms):
         plt.tight_layout()
         plt.show()
 
+# 8ビットAD変換
+def convert_to_8bit(waveform):
+    """
+    波形を8ビットに量子化
+    waveform: 元の波形
+    """
+    min_val, max_val = -1.0, 1.0  # 波形の範囲
+    quantized = np.clip(waveform, min_val, max_val)  # 範囲をクリップ
+    scaled = ((quantized - min_val) / (max_val - min_val) * 255).astype(np.uint8)  # 0-255にスケール
+    return scaled
+
 # 再生用ファイルの生成と再生
-# This section generates WAV files for each waveform and plays them back.
 def save_and_play(waveforms):
     for name, waveform in waveforms.items():
+        # 16bit PCMで保存
         scaled_waveform = np.int16(waveform / np.max(np.abs(waveform)) * 32767)  # 16bit PCMスケーリング
         filename = f"{name.replace(' ', '_')}.wav"  # ファイル名にスペースを含まないように
-        from scipy.io.wavfile import write
         write(filename, sampling_rate, scaled_waveform)  # WAVファイルの保存
-        print(f"Playing {name}...")  # 再生開始の通知
-        audio = Audio(filename)
-        display(audio)  # 再生
+        print(f"Playing {name} (16bit PCM)...")
+        display(Audio(filename))
+
+        # 8ビット量子化
+        quantized_waveform = convert_to_8bit(waveform)
+        filename_8bit = f"{name.replace(' ', '_')}_8bit.wav"
+        write(filename_8bit, sampling_rate, quantized_waveform.astype(np.int16))  # WAVファイルの保存
+        print(f"Playing {name} (8bit AD Conversion)...")
+        display(Audio(filename_8bit, rate=sampling_rate))
 
 # メイン処理
 waveforms = generate_waveforms()
