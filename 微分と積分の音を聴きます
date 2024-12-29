@@ -1,0 +1,89 @@
+# 必要なライブラリをインストール
+!pip install numpy scipy matplotlib
+
+# ライブラリのインポート
+import numpy as np
+from scipy.io.wavfile import write
+from IPython.display import Audio, display
+import matplotlib.pyplot as plt
+
+# 音波の生成用関数
+def generate_wave(frequency, duration, sampling_rate=44100):
+    """
+    基本波を生成する関数
+    frequency: 音の周波数 (Hz)
+    duration: 音の長さ (秒)
+    sampling_rate: サンプリングレート (デフォルト 44100 Hz)
+    """
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    wave = 0.6 * np.sin(2 * np.pi * frequency * t)
+    return t, wave
+
+# 微分と積分を計算
+def differentiate_wave(wave, sampling_rate):
+    """
+    波を微分
+    wave: 元の波形
+    sampling_rate: サンプリングレート
+    """
+    dt = 1 / sampling_rate
+    return np.gradient(wave, dt)
+
+def integrate_wave(wave, sampling_rate):
+    """
+    波を積分
+    wave: 元の波形
+    sampling_rate: サンプリングレート
+    """
+    dt = 1 / sampling_rate
+    return np.cumsum(wave) * dt
+
+# ドの音（C4: 261.63 Hz）の生成
+frequency = 2*261.63  # ドの音の周波数 (Hz)
+duration = 2  # 再生時間 (秒)
+sampling_rate = 44100  # サンプリングレート (Hz)
+t, wave = generate_wave(frequency, duration, sampling_rate)
+
+# 微分と積分波形を生成
+diff_wave = differentiate_wave(wave, sampling_rate)
+int_wave = integrate_wave(wave, sampling_rate)
+
+# プロット
+plt.figure(figsize=(12, 8))
+plt.subplot(3, 1, 1)
+plt.plot(t, wave)
+plt.title("Original Wave (Do)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+
+plt.subplot(3, 1, 2)
+plt.plot(t, diff_wave)
+plt.title("Differentiated Wave (Do')")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+
+plt.subplot(3, 1, 3)
+plt.plot(t, int_wave)
+plt.title("Integrated Wave (∫Do)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+
+plt.tight_layout()
+plt.show()
+
+# 再生用に.wav形式で保存
+wave_file = "do_wave.wav"
+diff_wave_file = "do_diff_wave.wav"
+int_wave_file = "do_int_wave.wav"
+
+write(wave_file, sampling_rate, (wave * 32767).astype(np.int16))
+write(diff_wave_file, sampling_rate, (diff_wave * 32767 / np.max(np.abs(diff_wave))).astype(np.int16))
+write(int_wave_file, sampling_rate, (int_wave * 32767 / np.max(np.abs(int_wave))).astype(np.int16))
+
+# Google Colabで再生
+print("Original Wave (Do):")
+display(Audio(wave_file, rate=sampling_rate))
+print("Differentiated Wave (Do'):")
+display(Audio(diff_wave_file, rate=sampling_rate))
+print("Integrated Wave (∫Do):")
+display(Audio(int_wave_file, rate=sampling_rate))
