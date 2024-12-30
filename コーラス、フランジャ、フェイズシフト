@@ -1,0 +1,70 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import soundfile as sf
+import IPython.display as ipd
+
+# 定義
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ（秒）(2周期)
+f = 261.63  # ドの音 (C4) の周波数
+
+# 2周期分の時間軸 (2周期 = 2 * (1 / f))
+t = np.linspace(0, 2 * (1 / f), int(fs * 2 * (1 / f)), endpoint=False)
+
+# 入力サイン波を生成 (ドの音)
+input_signal = 0.5 * np.sin(2 * np.pi * f * t)
+
+# コーラスエフェクター
+def chorus_effect(signal, depth=0.5, rate=0.2):
+    delay = int(fs * 0.01)  # 10ms の遅延
+    delayed_signal = np.roll(signal, delay)
+    return signal + depth * delayed_signal
+
+# フランジャエフェクター
+def flanger_effect(signal, depth=0.5, rate=0.2):
+    delay = int(fs * 0.005)  # 5ms の遅延
+    delayed_signal = np.roll(signal, delay)
+    return signal + depth * (delayed_signal - signal)
+
+# フェイズシフト回路エフェクター
+def phase_shift_effect(signal, depth=0.5, rate=0.2):
+    phase_shift = np.sin(2 * np.pi * rate * t) * depth
+    return signal * (1 + phase_shift)
+
+# コーラスエフェクターの適用
+chorus_signal = chorus_effect(input_signal)
+
+# フランジャエフェクターの適用
+flanger_signal = flanger_effect(input_signal)
+
+# フェイズシフト回路エフェクターの適用
+phase_shift_signal = phase_shift_effect(input_signal)
+
+# 時間領域のプロットと出力音の表示
+def plot_and_play(signal, title, duration=4):
+    # 4秒間再生のための調整
+    t_extended = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    
+    # 信号を4秒分に繰り返す
+    repeat_count = int(np.ceil(len(t_extended) / len(signal)))  # 繰り返す回数
+    extended_signal = np.tile(signal, repeat_count)[:len(t_extended)]  # 4秒分に調整
+
+    # プロット
+    plt.figure(figsize=(12, 6))
+    plt.plot(t_extended, extended_signal)
+    plt.title(f'{title} (Time Domain Signal)')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # 音を鳴らす（4秒再生）
+    sf.write(f'{title}_sound.wav', extended_signal, fs)
+    ipd.display(ipd.Audio(f'{title}_sound.wav'))
+
+# プロットと音の再生
+plot_and_play(input_signal, "Original C4 Note (Input Signal)", duration=4)
+plot_and_play(chorus_signal, "Chorus Effect", duration=4)
+plot_and_play(flanger_signal, "Flanger Effect", duration=4)
+plot_and_play(phase_shift_signal, "Phase Shift Effect", duration=4)
