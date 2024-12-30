@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import soundfile as sf
+import scipy.fftpack
+import IPython.display as ipd
+
+# 定義
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ（秒）
+f = 261.63  # ドの音 (C4) の周波数
+
+# 2周期分の時間軸 (2周期 = 2 * (1 / f))
+t = np.linspace(0, 2 * (1 / f), int(fs * 2 * (1 / f)), endpoint=False)
+
+# ドの音を生成 (サイン波)
+sound = 0.5 * np.sin(2 * np.pi * f * t)
+
+# ディストーション (歪みエフェクト)
+def distortion(signal, gain=5):
+    return np.clip(signal * gain, -1, 1)
+
+# オーバードライブ (軽い過剰増幅)
+def overdrive(signal, threshold=0.5):
+    return np.where(signal > threshold, threshold, np.where(signal < -threshold, -threshold, signal))
+
+# フェズ（簡単なフェーズ変化を加えるエフェクト）
+def fez_effect(signal, depth=0.3, rate=0.5):
+    phase_shift = np.sin(2 * np.pi * rate * t) * depth
+    return signal * (1 + phase_shift)
+
+# エフェクトの適用
+distorted_sound = distortion(sound)
+overdriven_sound = overdrive(sound)
+fezed_sound = fez_effect(sound)
+
+# FFTを計算
+def plot_fft(signal, title="FFT of the Signal"):
+    fft_data = np.abs(scipy.fftpack.fft(signal))
+    frequencies = np.fft.fftfreq(len(t), 1/fs)
+
+    # 周波数領域のプロット
+    plt.plot(frequencies[:len(frequencies)//2], fft_data[:len(fft_data)//2])
+    plt.title(title)
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Magnitude')
+    plt.grid(True)
+
+# 時間領域のプロットとFFTのプロットを各エフェクトについて個別に表示
+def plot_and_play(signal, title):
+    plt.figure(figsize=(12, 8))
+
+    # 時間領域のプロット
+    plt.subplot(2, 1, 1)
+    plt.plot(t, signal)
+    plt.title(f'Time Domain Signal ({title})')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+
+    # FFTのプロット
+    plt.subplot(2, 1, 2)
+    plot_fft(signal, f'FFT of {title}')
+    plt.tight_layout()
+    plt.show()
+
+    # 音を鳴らす
+    sf.write(f'{title}_sound.wav', signal, fs)
+    ipd.display(ipd.Audio(f'{title}_sound.wav'))
+
+# サイン波ドの音を表示
+plot_and_play(sound, "Original C4 Note (Sine Wave)")
+
+# 各エフェクトのプロットと再生
+plot_and_play(distorted_sound, "Distortion")
+plot_and_play(overdriven_sound, "Overdrive")
+plot_and_play(fezed_sound, "Fez Effect")
