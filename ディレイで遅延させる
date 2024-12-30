@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import soundfile as sf
+import IPython.display as ipd
+
+# 定義
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ（秒）(2周期)
+f = 261.63  # ドの音 (C4) の周波数
+
+# 2周期分の時間軸 (2周期 = 2 * (1 / f))
+t = np.linspace(0, 2 * (1 / f), int(fs * 2 * (1 / f)), endpoint=False)
+
+# 入力サイン波を生成 (ドの音)
+input_signal = 0.5 * np.sin(2 * np.pi * f * t)
+
+# パラメータ設定
+feedback_rate = 0.5  # 帰還率（Aに掛ける係数）
+delay_samples = int(fs * 0.01)  # 10ms の遅延
+
+# Aの初期値は0
+A = np.zeros_like(input_signal)
+
+# 結果を保存する配列
+output_signal = np.zeros_like(input_signal)
+
+# 信号処理のループ
+for i in range(1, len(input_signal)):
+    # (入力 + A)をディレイで遅延させる
+    delayed_signal = input_signal[i] + A[i-1]
+    
+    # 出力に遅延させた信号を格納
+    output_signal[i] = delayed_signal
+    
+    # 出力に帰還率をかけてAを更新
+    A[i] = feedback_rate * output_signal[i]
+
+# 時間領域のプロットと出力音の表示
+def plot_and_play(signal, title, duration=4):
+    # 4秒間再生のための調整
+    t_extended = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    
+    # 信号を4秒分に繰り返す
+    repeat_count = int(np.ceil(len(t_extended) / len(signal)))  # 繰り返す回数
+    extended_signal = np.tile(signal, repeat_count)[:len(t_extended)]  # 4秒分に調整
+
+    # プロット
+    plt.figure(figsize=(12, 6))
+    plt.plot(t_extended, extended_signal)
+    plt.title(f'{title} (Time Domain Signal)')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # 音を鳴らす（4秒再生）
+    sf.write(f'{title}_sound.wav', extended_signal, fs)
+    ipd.display(ipd.Audio(f'{title}_sound.wav'))
+
+# プロットと音の再生
+plot_and_play(output_signal, "Output Signal with Feedback", duration=4)
