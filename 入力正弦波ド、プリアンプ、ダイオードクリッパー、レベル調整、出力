@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import soundfile as sf
+import IPython.display as ipd
+
+# 定義
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ（秒）(2周期)
+f = 261.63  # ドの音 (C4) の周波数
+
+# 2周期分の時間軸 (2周期 = 2 * (1 / f))
+t = np.linspace(0, 2 * (1 / f), int(fs * 2 * (1 / f)), endpoint=False)
+
+# 入力サイン波を生成 (ドの音)
+input_signal = 0.5 * np.sin(2 * np.pi * f * t)
+
+# プリアンプ (増幅)
+def preamp(signal, gain=5):
+    return signal * gain
+
+# ダイオードクリッパー (クリッピング)
+def diode_clipper(signal, threshold=0.7):
+    return np.clip(signal, -threshold, threshold)
+
+# レベル調整 (最終的な音量調整)
+def level_adjustment(signal, factor=0.8):
+    return signal * factor
+
+# プリアンプの適用
+amplified_signal = preamp(input_signal)
+
+# ダイオードクリッパーの適用
+clipped_signal = diode_clipper(amplified_signal)
+
+# レベル調整の適用
+output_signal = level_adjustment(clipped_signal)
+
+# 時間領域のプロットと出力音の表示
+def plot_and_play(signal, title, duration=4):
+    # 4秒間再生のための調整
+    t_extended = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    
+    # 信号を4秒分に繰り返す
+    repeat_count = int(np.ceil(len(t_extended) / len(signal)))  # 繰り返す回数
+    extended_signal = np.tile(signal, repeat_count)[:len(t_extended)]  # 4秒分に調整
+
+    # プロット
+    plt.figure(figsize=(12, 6))
+    plt.plot(t_extended, extended_signal)
+    plt.title(f'{title} (Time Domain Signal)')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # 音を鳴らす（4秒再生）
+    sf.write(f'{title}_sound.wav', extended_signal, fs)
+    ipd.display(ipd.Audio(f'{title}_sound.wav'))
+
+# プロットと音の再生
+plot_and_play(input_signal, "Original C4 Note (Input Signal)", duration=4)
+plot_and_play(amplified_signal, "Amplified Signal (Preamp)", duration=4)
+plot_and_play(clipped_signal, "Clipped Signal (Diode Clipper)", duration=4)
+plot_and_play(output_signal, "Output Signal (After Level Adjustment)", duration=4)
