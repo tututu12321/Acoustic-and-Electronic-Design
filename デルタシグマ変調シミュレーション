@@ -1,0 +1,82 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, filtfilt
+
+# アナログ入力信号の生成
+fs = 1000  # サンプリング周波数
+f = 5  # 入力信号の周波数
+t = np.linspace(0, 1, fs)  # 時間軸
+analog_signal = 0.5 * np.sin(2 * np.pi * f * t)  # 入力アナログ信号
+
+# ΔΣ変調器の動作
+integrator = 0  # 積分器の初期値
+Vref = 0.5  # 基準電圧
+output_bits = []  # 出力ビットストリーム
+integrator_outputs = []  # 積分器の出力
+
+# ΔΣ変調器の動作をシミュレート
+for va in analog_signal:
+    # 減算回路（Δ）の計算
+    if integrator >= 0:
+        # 積分器の出力が非負の場合
+        delta = va - Vref
+    else:
+        # 積分器の出力が負の場合
+        delta = va + Vref
+    
+    # 積分器の更新
+    integrator += delta
+    
+    # 加算回路の出力（1ビットの生成）
+    if integrator >= 0:
+        bit = 1
+    else:
+        bit = 0
+    
+    # 出力ビットストリームにビットを追加
+    output_bits.append(bit)
+    
+    # 積分器の出力を記録
+    integrator_outputs.append(integrator)
+
+# ローパスフィルタの適用
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    y = filtfilt(b, a, data)
+    return y
+
+cutoff_frequency = 10  # カットオフ周波数
+filtered_signal = butter_lowpass_filter(output_bits, cutoff_frequency, fs)
+
+# プロット
+fig, axs = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
+
+# アナログ入力信号のプロット
+axs[0].plot(t, analog_signal, label='Analog Input Signal')
+axs[0].set_title('Analog Input Signal')
+axs[0].set_ylabel('Amplitude')
+axs[0].legend()
+
+# 積分器の出力のプロット
+axs[1].plot(t, integrator_outputs, label='Integrator Output')
+axs[1].set_title('Integrator Output')
+axs[1].set_ylabel('Amplitude')
+axs[1].legend()
+
+# ΔΣ変調ビットストリームのプロット
+axs[2].step(t, output_bits, where='mid', label='Delta-Sigma Modulated Bitstream')
+axs[2].set_title('Delta-Sigma Modulated Bitstream')
+axs[2].set_ylabel('Bit Value')
+axs[2].legend()
+
+# ローパスフィルタ後の信号のプロット
+axs[3].plot(t, filtered_signal, label='Filtered Signal (Lowpass)')
+axs[3].set_title('Filtered Signal (Lowpass)')
+axs[3].set_xlabel('Time [s]')
+axs[3].set_ylabel('Amplitude')
+axs[3].legend()
+
+plt.tight_layout()
+plt.show()
