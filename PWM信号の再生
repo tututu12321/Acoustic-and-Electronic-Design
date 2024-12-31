@@ -1,0 +1,42 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from IPython.display import Audio
+
+# パラメータ設定
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ (秒)
+f_carrier = 440  # A4の周波数（Hz）
+f_modulation = 220  # PWM信号の変調周波数（Hz）
+duty_cycle = 0.5  # PWMのデューティサイクル
+
+# 時間軸
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+
+# 基本の矩形波（A4音）の生成
+carrier_wave = np.sin(2 * np.pi * f_carrier * t)
+
+# PWM信号の生成
+pwm_signal = np.where(np.sin(2 * np.pi * f_modulation * t) > duty_cycle, 1.0, 0.0)
+
+# PWM信号と音声信号を掛け合わせる（変調）
+modulated_wave = carrier_wave * pwm_signal
+
+# プロット
+plt.figure(figsize=(10, 4))
+plt.subplot(2, 1, 1)
+plt.plot(t[:1000], carrier_wave[:1000])
+plt.title('A4 Tone (440Hz)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+
+plt.subplot(2, 1, 2)
+plt.plot(t[:1000], modulated_wave[:1000])
+plt.title('PWM Modulated A4 Tone')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+
+plt.tight_layout()
+plt.show()
+
+# 音声再生
+Audio(modulated_wave, rate=fs)
