@@ -1,0 +1,96 @@
+import numpy as np
+import scipy.io.wavfile as wav
+from IPython.display import Audio
+import matplotlib.pyplot as plt
+
+# 音の周波数 (F, E, A, Cの音)
+frequencies = {
+    'F4': 349.23,  # Fの4オクターブ
+    'E4': 329.63,  # Eの4オクターブ
+    'A4': 440.00,  # Aの4オクターブ
+    'C4': 261.63,  # Cの4オクターブ
+}
+
+# 音符の長さ（1秒あたりのサンプル数）
+sample_rate = 44100  # 44.1kHz
+
+# 音符の長さ（四分音符、8分音符）
+quarter_note_duration = 0.5  # 四分音符の長さ（秒）
+eighth_note_duration = 0.25  # 8分音符の長さ（秒）
+
+# よりリアルなピアノ音を生成する関数（倍音とピッチの微調整を追加）
+def generate_piano_wave(frequency, duration, sample_rate, attack=0.02, decay=0.1, sustain=0.7, release=0.2):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    # 基音と倍音を含む合成波を生成
+    wave = 0.5 * np.sin(2 * np.pi * frequency * t)  # 基音
+    for i in range(2, 10):  # 高次倍音を追加
+        wave += (1 / i) * np.sin(2 * np.pi * i * frequency * t)
+    
+    # 微妙なピッチの揺れ（ビブラート）を加える
+    vibrato_frequency = 5  # ビブラートの周波数（Hz）
+    vibrato_depth = 0.005  # ビブラートの深さ
+    vibrato = np.sin(2 * np.pi * vibrato_frequency * t) * vibrato_depth
+    wave = wave * np.sin(2 * np.pi * frequency * t + vibrato)  # ビブラートを加える
+
+    # ADSRエンベロープを適用
+    return apply_adsr_envelope(wave, attack, decay, sustain, release, duration, sample_rate)
+
+# ADSRエンベロープを適用する関数
+def apply_adsr_envelope(wave, attack, decay, sustain, release, duration, sample_rate):
+    # 各フェーズのサンプル数を計算
+    attack_samples = int(attack * sample_rate)
+    decay_samples = int(decay * sample_rate)
+    sustain_samples = int(sustain * sample_rate)
+    release_samples = int(release * sample_rate)
+
+    # 音の長さに合わせたエンベロープを生成
+    envelope = np.zeros(int(sample_rate * duration))
+    
+    # Attack (立ち上がり)
+    envelope[:attack_samples] = np.linspace(0, 1, attack_samples)
+    
+    # Decay (減衰)
+    envelope[attack_samples:attack_samples+decay_samples] = np.linspace(1, sustain, decay_samples)
+    
+    # Sustain (持続)
+    envelope[attack_samples+decay_samples:attack_samples+decay_samples+sustain_samples] = sustain
+    
+    # Release (減衰)
+    envelope[-release_samples:] = np.linspace(sustain, 0, release_samples)
+    
+    # エンベロープを波形に適用
+    return wave * envelope
+
+# 音のパターン (Fの四分音符、Fの8分音符、Eの四分音符、Eの8分音符、Amの四分音符、Amの8分音符、Cの四分音符、Cの8分音符)
+melody = [
+    ('F4', quarter_note_duration),
+    ('F4', eighth_note_duration),
+    ('E4', quarter_note_duration),
+    ('E4', eighth_note_duration),
+    ('A4', quarter_note_duration),
+    ('A4', eighth_note_duration),
+    ('C4', quarter_note_duration),
+    ('C4', eighth_note_duration),
+]
+
+# 音を生成して結合する
+audio = np.array([])
+for note, duration in melody:
+    audio = np.concatenate((audio, generate_piano_wave(frequencies[note], duration, sample_rate)))
+
+# 波形をプロット
+plt.figure(figsize=(10, 6))
+time = np.linspace(0, len(audio) / sample_rate, len(audio))
+plt.plot(time, audio)
+plt.title('Generated Melody Waveform')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+plt.show()
+
+# 音声ファイルを保存
+file_path = '/content/piano_melody_with_vibrato_and_adsr.wav'
+wav.write(file_path, sample_rate, (audio * 32767).astype(np.int16))
+
+# Google Colabで音声を再生
+Audio(file_path)
