@@ -1,0 +1,113 @@
+import requests
+from bs4 import BeautifulSoup
+import nltk
+from nltk.corpus import stopwords
+from collections import Counter
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+from gensim.models import Word2Vec, Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
+
+# 歌詞データをスクレイピングする関数
+def scrape_lyrics(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # HTMLの構造を確認（デバッグ用）
+    print(soup.prettify())  # ページ全体のHTMLを整形して表示します
+
+    # 歌詞を含む適切なタグとクラス名を探します（例: 'lyrics_class'を実際のクラス名に変更）
+    lyrics_div = soup.find('div', {'class': 'lyrics_class'})  # ここを実際のクラス名に置き換え
+    if lyrics_div:
+        lyrics = lyrics_div.get_text()
+        return lyrics
+    else:
+        print("指定したクラス名の要素が見つかりませんでした。")
+        return None
+
+# 不要語の削除（ストップワード）
+def remove_stopwords(lyrics):
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('japanese'))  # 日本語のストップワード
+    lyrics_clean = ' '.join([word for word in lyrics.split() if word not in stop_words])
+    return lyrics_clean
+
+# 単語の頻度を集計する関数
+def word_frequency(lyrics):
+    word_freq = Counter(lyrics.split())
+    return word_freq
+
+# WordCloudで可視化する関数
+def plot_wordcloud(word_freq):
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freq)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+
+# TF-IDFの算出と表示する関数
+def compute_tfidf(lyrics_clean):
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform([lyrics_clean])
+    return tfidf_matrix, vectorizer
+
+# LDAを使ってトピックを抽出する関数
+def lda_topic_modeling(tfidf_matrix, vectorizer):
+    lda = LatentDirichletAllocation(n_components=3, random_state=42)
+    lda.fit(tfidf_matrix)
+    for index, topic in enumerate(lda.components_):
+        print(f"Topic #{index}:")
+        print([vectorizer.get_feature_names_out()[i] for i in topic.argsort()[-10:]])
+
+# Word2Vecを用いた分析
+def word2vec_analysis(lyrics_clean):
+    model = Word2Vec(sentences=[lyrics_clean.split()], vector_size=100, window=5, min_count=1, workers=4)
+    return model
+
+# Doc2Vecを用いた分析
+def doc2vec_analysis(lyrics_clean):
+    documents = [TaggedDocument(words=lyrics_clean.split(), tags=[str(i)]) for i in range(1)]
+    model = Doc2Vec(documents, vector_size=100, window=5, min_count=1, workers=4)
+    return model
+
+# メイン処理
+def main():
+    # 歌詞のURL（適切なURLに置き換えてください）
+    url = 'https://www.uta-net.com/song/12345/'  # 実際のURLに置き換えてください
+    
+    # 歌詞データをスクレイピング
+    lyrics = scrape_lyrics(url)
+    
+    # 歌詞データが取得できた場合に処理を進める
+    if lyrics:
+        # 不要語を削除
+        lyrics_clean = remove_stopwords(lyrics)
+        
+        # 単語頻度の集計
+        word_freq = word_frequency(lyrics_clean)
+        print("Top 10 words:", word_freq.most_common(10))
+        
+        # Word Cloudで可視化
+        plot_wordcloud(word_freq)
+        
+        # TF-IDFの算出
+        tfidf_matrix, vectorizer = compute_tfidf(lyrics_clean)
+        print("TF-IDF matrix shape:", tfidf_matrix.shape)
+        
+        # LDAでトピック分類
+        lda_topic_modeling(tfidf_matrix, vectorizer)
+        
+        # Word2VecとDoc2Vec分析
+        word2vec_model = word2vec_analysis(lyrics_clean)
+        print("Word2Vec model:", word2vec_model)
+        
+        doc2vec_model = doc2vec_analysis(lyrics_clean)
+        print("Doc2Vec model:", doc2vec_model)
+    else:
+        print("歌詞が取得できませんでした。")
+
+# 実行
+if __name__ == '__main__':
+    main()
