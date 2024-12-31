@@ -1,0 +1,50 @@
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from gensim.models import Word2Vec
+from janome.tokenizer import Tokenizer
+import numpy as np
+
+# Example song lyrics data (English translations added as comments)
+lyrics = [
+    "Your Name",  # Your Name
+    "Before Goodbye",  # Before Goodbye
+    "Unforgettable",  # Unforgettable
+    "No matter how much I love",  # No matter how much I love
+    "Like a star floating in the night sky"  # Like a star floating in the night sky
+]
+
+# Tokenize and perform morphological analysis
+def tokenize_text(text):
+    tokenizer = Tokenizer()
+    tokens = tokenizer.tokenize(text)
+    words = [token.base_form for token in tokens if token.base_form not in ['の', 'は', 'を', 'に', 'と', 'へ']]  # Exclude particles
+    return words
+
+# Tokenize all song lyrics
+tokenized_lyrics = [tokenize_text(lyric) for lyric in lyrics]
+
+# Train a Word2Vec model
+model = Word2Vec(sentences=tokenized_lyrics, vector_size=100, window=5, min_count=1, sg=0)
+
+# Retrieve word vectors from the trained model
+word_vectors = model.wv
+words = list(word_vectors.index_to_key)
+vectors = np.array([word_vectors[word] for word in words])
+
+# Apply PCA for dimensionality reduction (to 2D)
+pca = PCA(n_components=2)
+reduced_vectors = pca.fit_transform(vectors)
+
+# 2D scatter plot
+plt.figure(figsize=(8, 6))
+plt.scatter(reduced_vectors[:, 0], reduced_vectors[:, 1])
+
+# Annotate words on the plot
+for i, word in enumerate(words):
+    plt.annotate(word, (reduced_vectors[i, 0], reduced_vectors[i, 1]))
+
+plt.title("Word2Vec Word Vectors (PCA Reduced to 2D)")
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.grid(True)
+plt.show()
