@@ -1,0 +1,38 @@
+import numpy as np
+import scipy.signal as signal
+
+# FIRフィルタのレイテンシー計算
+def fir_latency(filter_taps, fs):
+    """
+    FIRフィルタのレイテンシー計算
+    :param filter_taps: フィルタのタップ数（FIRフィルタの係数数）
+    :param fs: サンプリング周波数（Hz）
+    :return: レイテンシー（秒）
+    """
+    return filter_taps / fs
+
+# IIRフィルタのレイテンシー計算（簡単な例）
+def iir_latency(b, a, fs):
+    """
+    IIRフィルタのレイテンシー計算
+    :param b: IIRフィルタの分子係数
+    :param a: IIRフィルタの分母係数
+    :param fs: サンプリング周波数（Hz）
+    :return: レイテンシー（秒）
+    """
+    # 遅延は一般的に最大遅延時間を使用しますが、簡単化のためIIRの定常状態に到達するまでの時間を使用
+    # 実際の計算はフィルタの構造に依存
+    return len(b) / fs  # フィルタの長さを基にしたおおよそのレイテンシー
+
+# パラメータ設定
+fs = 1000  # サンプリング周波数 (Hz)
+fir_filter_taps = 51  # FIRフィルタのタップ数
+iir_b = [0.1, 0.2, 0.3]  # IIRフィルタの分子係数
+iir_a = [1, -0.7, 0.2]  # IIRフィルタの分母係数
+
+# レイテンシー計算
+fir_latency_value = fir_latency(fir_filter_taps, fs)
+iir_latency_value = iir_latency(iir_b, iir_a, fs)
+
+print(f"FIRフィルタのレイテンシー: {fir_latency_value:.6f}秒")
+print(f"IIRフィルタのレイテンシー: {iir_latency_value:.6f}秒")
