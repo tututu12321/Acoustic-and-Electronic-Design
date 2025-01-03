@@ -1,0 +1,61 @@
+# 必要なライブラリをインストール
+!pip install librosa scipy numpy matplotlib soundfile
+
+# ライブラリのインポート
+import numpy as np
+import scipy.signal as signal
+import matplotlib.pyplot as plt
+import soundfile as sf
+
+# パラメータ設定
+frequency = 261.63  # 「ド」の周波数 (Hz)
+duration = 2.0  # 音の長さ (秒)
+sample_rate = 44100  # サンプリング周波数 (Hz)
+delay_time = 189 / 1000  # ディレイタイム（秒）
+feedback = 0.26  # フィードバック量
+low_cut = 200  # ローカット周波数 (Hz)
+high_cut = 3000  # ハイカット周波数 (Hz)
+mix = 0.05  # ミックス比率 (4〜6%)
+
+# 「ド」の音を生成
+t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+y = 0.5 * np.sin(2 * np.pi * frequency * t)  # サイン波
+
+# ディレイのサンプル数を計算
+delay_samples = int(delay_time * sample_rate)
+
+# ディレイ信号を生成
+delayed_signal = np.zeros_like(y)
+for i in range(delay_samples, len(y)):
+    delayed_signal[i] = y[i] + feedback * delayed_signal[i - delay_samples]
+
+# バンドパスフィルタ設計 (ローカットとハイカット)
+nyquist = 0.5 * sample_rate
+low_cut_normalized = low_cut / nyquist
+high_cut_normalized = high_cut / nyquist
+b, a = signal.butter(1, [low_cut_normalized, high_cut_normalized], btype='bandpass')
+
+# フィルタリング処理
+filtered_signal = signal.filtfilt(b, a, y)
+
+# オリジナル信号と遅延信号をミックス
+mixed_signal = (1 - mix) * filtered_signal + mix * delayed_signal
+
+# オリジナル、フィルタ後、ミックス信号をプロット
+plt.figure(figsize=(12, 8))
+plt.subplot(3, 1, 1)
+plt.title("Original Signal (C Note)")
+plt.plot(t[:1000], y[:1000])  # 初めの1000サンプルを表示
+plt.subplot(3, 1, 2)
+plt.title("Filtered Signal (Low & High Cut)")
+plt.plot(t[:1000], filtered_signal[:1000])
+plt.subplot(3, 1, 3)
+plt.title("Mixed Signal with Delay")
+plt.plot(t[:1000], mixed_signal[:1000])
+plt.tight_layout()
+plt.show()
+
+# 処理結果を保存
+output_file = "processed_do_note.wav"
+sf.write(output_file, mixed_signal, sample_rate)
+print(f"処理結果を保存しました: {output_file}")
