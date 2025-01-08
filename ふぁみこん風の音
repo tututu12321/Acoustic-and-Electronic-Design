@@ -1,0 +1,110 @@
+import numpy as np
+import soundfile as sf
+import scipy.signal as sg
+import IPython.display as ipd
+
+# サンプリング周波数
+fs = 44100
+
+# ノート番号から周波数を計算（A4 = 440Hz）
+def midi_to_freq(midi_note):
+    return 440.0 * 2 ** ((midi_note - 69) / 12.0)
+
+# 矩形波の生成
+def square_wave(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return np.sign(np.sin(2 * np.pi * freq * t))
+
+# 三角波の生成（疑似三角波）
+def triangle_wave(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return 2 * (t * freq - np.floor(t * freq + 0.5))  # ギザギザ三角波
+
+# ロービットノイズの生成
+def low_bit_noise(duration, fs):
+    noise = np.random.randint(-128, 128, int(fs * duration), dtype=np.int8)  # ロービットノイズ
+    return np.float32(noise) / 128.0  # [-1, 1]の範囲にスケーリング
+
+# 25%パルス波の生成
+def pulse_wave_25(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return np.sign(np.sin(2 * np.pi * freq * t) * (t % (1/freq) < (0.25 / freq)))
+
+# 12.5%パルス波の生成
+def pulse_wave_12_5(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return np.sign(np.sin(2 * np.pi * freq * t) * (t % (1/freq) < (0.125 / freq)))
+
+# ADSRエンベロープを生成
+def adsr_envelope(attack, decay, sustain, release, duration, fs):
+    total_samples = int(duration * fs)
+    attack_samples = int(attack * fs)
+    decay_samples = int(decay * fs)
+    release_samples = int(release * fs)
+
+    envelope = np.zeros(total_samples)
+
+    # アタック（線形増加）
+    envelope[:attack_samples] = np.linspace(0, 1, attack_samples)
+    
+    # ディケイ（減少）
+    envelope[attack_samples:attack_samples + decay_samples] = np.linspace(1, sustain, decay_samples)
+    
+    # サスティン（一定）
+    envelope[attack_samples + decay_samples:total_samples - release_samples] = sustain
+    
+    # リリース（減少）
+    envelope[-release_samples:] = np.linspace(sustain, 0, release_samples)
+    
+    return envelope
+
+# ビブラート（Vibrato）を加える
+def vibrato_wave(freq, duration, fs, depth=0.1, rate=5):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    vibrato = np.sin(2 * np.pi * rate * t) * depth
+    return np.sin(2 * np.pi * (freq + vibrato) * t)  # 音程をビブラート
+
+# 周波数スウィープ（Pitch Sweep）を加える
+def frequency_sweep(start_freq, end_freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    freq = np.linspace(start_freq, end_freq, t.size)
+    return np.sin(2 * np.pi * freq * t)  # スウィープ音
+
+# 音の生成（選択した音色に基づく）
+def generate_famicom_sound(note_number, wave_type='square', duration=0.5):
+    freq = midi_to_freq(note_number)  # MIDIノート番号から周波数を計算
+    if wave_type == 'square':
+        sound = square_wave(freq, duration, fs)
+    elif wave_type == 'triangle':
+        sound = triangle_wave(freq, duration, fs)
+    elif wave_type == 'low_bit_noise':
+        sound = low_bit_noise(duration, fs)
+    elif wave_type == 'pulse_25':
+        sound = pulse_wave_25(freq, duration, fs)
+    elif wave_type == 'pulse_12_5':
+        sound = pulse_wave_12_5(freq, duration, fs)
+    else:
+        raise ValueError("wave_type should be 'square', 'triangle', 'low_bit_noise', 'pulse_25', or 'pulse_12_5'")
+    return sound
+
+# 音の合成（複数の音を使ってファミコン風のトラックを作成）
+def create_famicom_track():
+    # 複数の音を合成
+    sound1 = generate_famicom_sound(60, wave_type='square', duration=0.5)  # C4の矩形波
+    sound2 = generate_famicom_sound(62, wave_type='triangle', duration=0.5)  # D4の疑似三角波
+    sound3 = generate_famicom_sound(64, wave_type='low_bit_noise', duration=0.5)  # E4のロービットノイズ
+    sound4 = generate_famicom_sound(65, wave_type='pulse_25', duration=0.5)  # F4の25%パルス波
+    sound5 = generate_famicom_sound(67, wave_type='pulse_12_5', duration=0.5)  # G4の12.5%パルス波
+
+    # 音を合成（順番に結合）
+    track = np.concatenate([sound1, sound2, sound3, sound4, sound5])
+    return track
+
+# ファミコン風のトラックを生成
+famicom_track = create_famicom_track()
+
+# WAVファイルとして保存
+sf.write('famicom_sound.wav', famicom_track, fs, subtype='PCM_16')
+
+# Google Colabで音を再生
+ipd.display(ipd.Audio('famicom_sound.wav'))
