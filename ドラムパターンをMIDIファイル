@@ -1,0 +1,58 @@
+import mido
+from mido import Message, MidiFile, MidiTrack, MetaMessage
+from midi2audio import FluidSynth
+import pygame
+
+# ドラム楽器のノート番号定義（General MIDIに基づく）
+BD, SD, CH, OH , CC, CB, HC = 36, 38, 42, 46, 49, 56, 39
+
+# MIDIファイル作成
+mid = MidiFile()
+track = MidiTrack()
+mid.tracks.append(track)
+
+# テンポ設定（100 BPM）
+track.append(MetaMessage('set_tempo', tempo=mido.bpm2tempo(100)))
+
+# ドラム音をオンにする関数
+def dr_on(nt):
+    track.append(Message('note_on', channel=9, note=nt, velocity=120))
+
+# ドラム音をオフにする関数
+def dr_off(nt, t):
+    track.append(Message('note_off', note=nt, time=t))
+
+# 8ビートのドラムパターン（2小節分）
+for i in range(4):
+    dr_on(BD)  # バスドラム
+    dr_on(CH)  # クローズド・ハイハット
+    dr_off(CH, 240)
+
+    dr_on(CH)
+    dr_off(CH, 240)
+
+    dr_on(SD)  # スネアドラム
+    dr_on(CH)
+    dr_off(CH, 240)
+
+    dr_on(BD)
+    dr_on(CH)
+    dr_off(CH, 240)
+
+# MIDIファイル保存
+midi_filename = '/content/drum_play.mid'
+mid.save(midi_filename)  # Google Colab内に保存
+
+# MIDIファイルをWAV形式に変換
+wav_filename = '/content/drum_play.wav'
+fs = FluidSynth()
+fs.midi_to_audio(midi_filename, wav_filename)
+
+# pygameを使ってWAVファイルを再生
+pygame.mixer.init()
+pygame.mixer.music.load(wav_filename)
+pygame.mixer.music.play()
+
+# 再生が終了するまで待つ
+while pygame.mixer.music.get_busy():
+    pygame.time.Clock().tick(10)
