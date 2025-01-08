@@ -1,0 +1,58 @@
+import numpy as np
+import soundfile as sf
+import scipy.signal as sg
+import IPython.display as ipd
+
+# サンプリング周波数
+fs = 44100
+
+# MIDIノート番号を周波数に変換する関数
+def midi_to_freq(midi_note):
+    return 440.0 * 2 ** ((midi_note - 69) / 12.0)
+
+# 矩形波の生成
+def square_wave(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return np.sign(np.sin(2 * np.pi * freq * t))
+
+# 音の生成（開始時刻、音の高さ、音の大きさ、音の長さに基づく）
+def generate_note_data(start_time, pitch, velocity, length):
+    # 音の周波数を計算
+    freq = midi_to_freq(pitch)
+
+    # 音の生成（矩形波を使用）
+    note_data = square_wave(freq, length, fs)
+
+    # 音の大きさをベロシティに基づいて調整
+    note_data *= velocity / 127.0
+
+    # 時間に基づいて音の開始位置を調整
+    start_sample = int(start_time * fs)
+    sound = np.zeros(start_sample)
+    sound = np.append(sound, note_data)
+
+    return sound
+
+# 楽譜データ：トラック、開始時刻、音の高さ、音の大きさ、音の長さ
+score_data = [
+    {"track": 1, "start_time": 0.0, "pitch": 60, "velocity": 100, "length": 0.5},  # C4
+    {"track": 1, "start_time": 0.5, "pitch": 62, "velocity": 100, "length": 0.5},  # D4
+    {"track": 1, "start_time": 1.0, "pitch": 64, "velocity": 100, "length": 0.5},  # E4
+    {"track": 1, "start_time": 1.5, "pitch": 65, "velocity": 100, "length": 0.5},  # F4
+    {"track": 1, "start_time": 2.0, "pitch": 67, "velocity": 100, "length": 0.5},  # G4
+    {"track": 1, "start_time": 2.5, "pitch": 69, "velocity": 100, "length": 0.5}   # A4
+]
+
+# 出力データの初期化
+output_data = np.zeros(0)
+
+# 楽譜データに基づいて音を生成して合成
+for note in score_data:
+    note_data = generate_note_data(note["start_time"], note["pitch"], note["velocity"], note["length"])
+    output_data = np.append(output_data, note_data)
+
+# WAVファイルとして保存
+sf.write('generated_music.wav', output_data, fs, subtype='PCM_16')
+
+# Google Colabで音を再生
+ipd.display(ipd.Audio('generated_music.wav'))
