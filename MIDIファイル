@@ -1,0 +1,66 @@
+import mido
+from mido import MidiFile, MidiTrack, Message
+import numpy as np
+import soundfile as sf
+import IPython.display as ipd
+
+# ダミーMIDIファイルの作成
+def create_dummy_midi(filename):
+    midi = MidiFile()
+    track = MidiTrack()
+    midi.tracks.append(track)
+
+    # ノートオン・ノートオフのメッセージを追加
+    track.append(Message('program_change', program=12))  # 楽器を変更（12番の楽器）
+    
+    # ノートの設定（MIDIノート番号）
+    notes = [60, 64, 67, 72]  # C4, E4, G4, C5
+    time = 480  # 1ビートの時間
+
+    for note in notes:
+        track.append(Message('note_on', note=note, velocity=64, time=0))  # ノートオン
+        track.append(Message('note_off', note=note, velocity=64, time=time))  # ノートオフ
+
+    # MIDIファイルとして保存
+    midi.save(filename)
+
+# ダミーMIDIファイルを作成
+create_dummy_midi('dummy_midi.mid')
+
+# MIDIファイルを読み込んで表示（再生用）
+mid = MidiFile('dummy_midi.mid')
+
+# サンプリング周波数と音声の合成
+fs = 44100
+
+# MIDIノート番号を周波数に変換する関数
+def midi_to_freq(midi_note):
+    return 440.0 * 2 ** ((midi_note - 69) / 12.0)
+
+# 音源生成：矩形波
+def square_wave(freq, duration, fs):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+
+# 出力音声データの初期化
+audio_data = np.zeros(0)
+
+# MIDIファイルからノートオンとノートオフのイベントを抽出して音を生成
+for i, track in enumerate(mid.tracks):
+    time = 0  # 時間の累積
+    for msg in track:
+        time += msg.time  # イベント間の時間を加算
+        if msg.type == 'note_on':  # ノートオンイベント
+            # ノートオンの音源を生成（音の周波数と長さを設定）
+            freq = midi_to_freq(msg.note)  # 音の周波数
+            duration = 0.5  # 音の長さ
+            note_data = square_wave(freq, duration, fs)
+            audio_data = np.append(audio_data, note_data)
+        elif msg.type == 'note_off':  # ノートオフイベント
+            pass  # ノートオフで音を止める処理（今回は扱いません）
+
+# 音声ファイルに保存
+sf.write('generated_audio_from_dummy_midi.wav', audio_data, fs, subtype='PCM_16')
+
+# Google Colabで音声を再生
+ipd.display(ipd.Audio('generated_audio_from_dummy_midi.wav'))
