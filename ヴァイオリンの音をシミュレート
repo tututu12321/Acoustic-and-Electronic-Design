@@ -1,0 +1,92 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from IPython.display import Audio
+
+# 基本設定
+fs = 44100  # サンプリング周波数 (Hz)
+duration = 0.5  # 各音の長さ (秒)
+velocity = 127  # 最大ベロシティ (音量)
+note_numbers = [60, 62, 64, 65, 67, 69, 71, 72]  # ドレミファソラシドのMIDIノート番号
+ratio = 0.1  # ピッチ変化の速さ (ビブラートの深さ)
+max_frequency = 6000  # 最大周波数
+amplification_factor = 20  # 音量増幅の調整（自由に変更）
+
+# 音を生成する関数
+def generate_violin_sound(note_number, duration, fs, ratio, max_frequency, velocity):
+    # 1. 基本周波数の計算
+    f0 = 440 * 2**((note_number - 69) / 12)
+
+    # 2. 部分音の計算
+    number_of_partials = int(np.floor(max_frequency / f0))
+
+    # 3. ビブラートの追加
+    vibrato_rate = 8  # ビブラートの周波数 (Hz)
+    vibrato_depth = 440 * 2**((note_number + ratio - 69) / 12)
+
+    # 4. 周波数変動の計算
+    def f0_fluctuation(n, max_fluctuation=5):
+        fluctuation = np.random.uniform(-max_fluctuation, max_fluctuation)
+        return fluctuation
+
+    # 5. 部分音の合成
+    time = np.arange(0, duration, 1/fs)
+    synthesized_sound = np.zeros_like(time)
+
+    for i in range(1, number_of_partials + 1):
+        partial_freq = f0 * i  # 部分音の周波数
+        partial = np.sin(2 * np.pi * partial_freq * time)
+        # ビブラートと周波数変動の追加
+        vibrato = vibrato_depth * np.sin(2 * np.pi * vibrato_rate * time)
+        fluctuation = f0_fluctuation(time, 1)  # 微小変動
+        partial += vibrato + fluctuation  # 部分音にビブラートと変動を加える
+        synthesized_sound += partial
+
+    # 6. ADSRエンベロープによる音量調整
+    def adsr_envelope(n, attack_time=0.1, decay_time=0.2, sustain_level=0.5, release_time=0.3):
+        attack_samples = int(attack_time * fs)
+        decay_samples = int(decay_time * fs)
+        release_samples = int(release_time * fs)
+
+        envelope = np.zeros_like(n)
+
+        # アタック
+        envelope[:attack_samples] = np.linspace(0, 1, attack_samples)
+        # ディケイ
+        envelope[attack_samples:attack_samples+decay_samples] = np.linspace(1, sustain_level, decay_samples)
+        # サスティン
+        envelope[attack_samples+decay_samples:len(n)-release_samples] = sustain_level
+        # リリース
+        envelope[-release_samples:] = np.linspace(sustain_level, 0, release_samples)
+
+        return envelope
+
+    # 音量調整
+    vca_envelope = adsr_envelope(time)
+    synthesized_sound *= vca_envelope
+
+    # 7. 最終的な音の正規化
+    synthesized_sound = synthesized_sound * (velocity / 127)
+    synthesized_sound = synthesized_sound / np.max(np.abs(synthesized_sound))  # 正規化
+
+    # 音量を自由に増幅
+    synthesized_sound *= amplification_factor  # 音量の増幅（自由に調整可能）
+
+    return synthesized_sound
+
+# ドレミファソラシドの音を生成
+all_notes_sound = np.array([])
+
+for note in note_numbers:
+    note_sound = generate_violin_sound(note, duration, fs, ratio, max_frequency, velocity)
+    all_notes_sound = np.concatenate((all_notes_sound, note_sound))
+
+# 結果のプロット
+plt.figure(figsize=(10, 4))
+plt.plot(np.arange(0, len(all_notes_sound)) / fs, all_notes_sound)
+plt.title(f"Synthesized Violin Sound Waveform (Do Re Mi Fa So La Ti Do) - Amplified {amplification_factor}x")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.show()
+
+# 音をGoogle Colabで再生
+Audio(all_notes_sound, rate=fs)
