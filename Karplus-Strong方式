@@ -1,0 +1,34 @@
+import sys
+import numpy as np
+import soundfile as sf
+from IPython.display import Audio
+
+# コマンドライン引数の代わりに固定値で設定
+amp = 0.3  # 音の振幅
+filename = '/content/generated_sound.wav'  # 保存するファイル名
+p = 300  # 遅延数
+b = 0.5  # 反転確率
+
+fs = 48000  # サンプリング周波数
+interval = int(fs * 0.5)  # 音符が変化する間隔
+n_data = interval * 7  # データの数
+wave = np.zeros(n_data)  # 波形データを入れる場所
+
+# 7音符分の音を生成
+for i in range(7):
+    n = i * interval
+    wave[n:n + p + 1] = (np.random.rand(p + 1) - 0.5) * amp  # ランダムノイズで初期化
+    rd = np.random.rand(interval)  # 反転確率用の乱数
+
+    # デジタルフィルタに通す
+    for m in range(interval):
+        if m > p:
+            wave[n + m] = 0.5 * (wave[n + m - p] + wave[n + m - p - 1])
+            if rd[m] > b:
+                wave[n + m] *= -1.0
+
+# 音声ファイルとして保存（Google Colab上ではなくても、別途保存できます）
+sf.write(filename, wave, fs, subtype='PCM_16')
+
+# 音をGoogle Colabで再生
+Audio(wave, rate=fs)
