@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+from scipy.signal import spectrogram
+import soundfile as sf
+import IPython.display as ipd
+
+# ダミー音声データの生成
+fs = 44100  # サンプリング周波数
+duration = 2  # 音の長さ（秒）
+t = np.linspace(0, duration, int(fs * duration), endpoint=False)  # 時間軸
+
+# サイン波（純音）の生成
+freq = 440  # Hz (A4)
+audio_data = 0.5 * np.sin(2 * np.pi * freq * t)  # サイン波音
+
+# ダミーデータの保存
+sf.write('dummy_sound.wav', audio_data, fs)
+
+# 音声データの再生
+ipd.display(ipd.Audio('dummy_sound.wav'))
+
+# 時間領域の波形（音の大きさ）
+plt.figure(figsize=(10, 4))
+plt.plot(t, audio_data, color='blue')
+plt.title('Time Domain Signal (Amplitude)')
+plt.xlabel('Time [s]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+plt.show()
+
+# FFTの計算
+n = len(audio_data)
+fft_data = fft(audio_data)  # FFT変換
+frequencies = fftfreq(n, 1 / fs)  # 周波数軸
+
+# 振幅スペクトル
+amplitude_spectrum = np.abs(fft_data)
+
+# 周波数領域のスペクトル
+plt.figure(figsize=(10, 4))
+plt.plot(frequencies[:n // 2], amplitude_spectrum[:n // 2], color='green')
+plt.title('Frequency Domain (Spectrum)')
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Amplitude')
+plt.grid(True)
+plt.show()
+
+# 短時間フーリエ変換 (STFT) を使用して3Dプロットを生成
+f, t_stft, Sxx = spectrogram(audio_data, fs)
+
+# 3Dプロット
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+T, F = np.meshgrid(t_stft, f)
+ax.plot_surface(T, F, 10 * np.log10(Sxx), cmap='viridis')
+
+ax.set_xlabel('Time [s]')
+ax.set_ylabel('Frequency [Hz]')
+ax.set_zlabel('Power [dB]')
+ax.set_title('3D Spectrogram (Time-Frequency-Amplitude)')
+
+plt.show()
