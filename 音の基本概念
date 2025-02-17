@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import square, sawtooth
+from scipy.io.wavfile import write
+from IPython.display import Audio
+
+# Sampling rate and time settings
+fs = 44100  # Sampling rate (Hz)
+t = np.linspace(0, 1, fs, endpoint=False)  # Time axis for 1 second
+
+# 1.1 Pure Tone (Single frequency sine wave)
+pure_tone = np.sin(2 * np.pi * 440 * t)  # Pure tone at 440Hz
+
+# 1.2 Complex Tone (Combination of multiple sine waves)
+complex_tone = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 880 * t)
+
+# 1.3 Three Elements of Sound (Time domain comparison)
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 1, 1)
+plt.plot(t[:1000], pure_tone[:1000], label="Pure Tone (440Hz)", color='b')
+plt.legend()
+plt.subplot(2, 1, 2)
+plt.plot(t[:1000], complex_tone[:1000], label="Complex Tone (440Hz + 880Hz)", color='r')
+plt.legend()
+plt.xlabel("Time [s]")
+plt.suptitle("Pure Tone vs. Complex Tone")
+plt.show()
+
+# 1.4 Loudness (Changing Amplitude)
+loud_tone = 2 * np.sin(2 * np.pi * 440 * t)  # Doubling the amplitude
+
+# 1.5 Pitch (Changing Frequency)
+low_tone = np.sin(2 * np.pi * 220 * t)  # Lower pitch (220Hz)
+high_tone = np.sin(2 * np.pi * 880 * t) # Higher pitch (880Hz)
+
+# 1.6 Timbre (Different Waveforms)
+square_wave = square(2 * np.pi * 440 * t)  # Square wave
+sawtooth_wave = sawtooth(2 * np.pi * 440 * t)  # Sawtooth wave
+
+# Plot waveforms
+plt.figure(figsize=(12, 8))
+plt.subplot(3, 1, 1)
+plt.plot(t[:1000], square_wave[:1000], label="Square Wave", color='g')
+plt.legend()
+plt.subplot(3, 1, 2)
+plt.plot(t[:1000], sawtooth_wave[:1000], label="Sawtooth Wave", color='m')
+plt.legend()
+plt.subplot(3, 1, 3)
+plt.plot(t[:1000], pure_tone[:1000], label="Pure Tone (Sine Wave)", color='b')
+plt.legend()
+plt.xlabel("Time [s]")
+plt.suptitle("Comparison of Different Waveforms (Timbre)")
+plt.show()
+
+# Play the pure tone (For Google Colab)
+Audio(pure_tone, rate=fs)
