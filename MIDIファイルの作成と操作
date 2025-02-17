@@ -1,0 +1,38 @@
+import mido
+from mido import MidiFile, MidiTrack, Message
+import numpy as np
+
+# MIDIファイルの作成
+midi = MidiFile()
+
+# トラックの作成
+track = MidiTrack()
+midi.tracks.append(track)
+
+# ノートオンとノートオフ（4.2）
+# 60はC4、ベロシティは64で指定（音符を鳴らしてから500ms後に停止）
+track.append(Message('note_on', note=60, velocity=64, time=0))  # ノートオン
+track.append(Message('note_off', note=60, velocity=64, time=500))  # ノートオフ
+
+# ノートナンバーとベロシティ（4.3, 4.4）
+# ノートナンバー60 (C4)とノートナンバー62 (D4)を使う
+track.append(Message('note_on', note=60, velocity=100, time=0))  # C4
+track.append(Message('note_on', note=62, velocity=80, time=500))  # D4
+track.append(Message('note_off', note=60, velocity=64, time=500))  # C4オフ
+track.append(Message('note_off', note=62, velocity=64, time=500))  # D4オフ
+
+# プログラムチェンジ（4.5, 4.6） - 楽器を変更
+# 0: Acoustic Grand Piano
+track.append(Message('program_change', program=0, time=0))
+
+# パーカッションマップ（4.7） - ドラム音の追加
+# 35: Acoustic Bass Drum (バスドラム)
+track.append(Message('note_on', note=35, velocity=100, time=0))  # バスドラム
+track.append(Message('note_off', note=35, velocity=64, time=500))  # バスドラム終了
+
+# MIDIファイルを保存
+midi.save('output.mid')
+
+# Google Colabで再生
+from IPython.display import Audio
+Audio('output.mid')
