@@ -1,0 +1,112 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.signal as sig
+
+# Distortion effect (歪み系)
+def distortion(signal, gain=5):
+    return np.clip(signal * gain, -1, 1)
+
+# Modulation effect (モジュレーション系)
+def modulation(signal, rate=2, depth=0.5, fs=44100):
+    t = np.arange(len(signal)) / fs
+    modulator = 1 + depth * np.sin(2 * np.pi * rate * t)
+    return signal * modulator
+
+# Reverb effect (空間系)
+def reverb(signal, delay=0.3, decay=0.5, fs=44100):
+    delay_samples = int(delay * fs)
+    reverb_signal = np.copy(signal)
+    for i in range(delay_samples, len(signal)):
+        reverb_signal[i] += decay * signal[i - delay_samples]
+    return reverb_signal
+
+# Compression effect (ダイナミクス系)
+def compression(signal, threshold=0.5, ratio=4, attack=0.01, release=0.1, fs=44100):
+    compressed_signal = np.copy(signal)
+    envelope = np.zeros_like(signal)
+    for i in range(1, len(signal)):
+        # Envelope tracking
+        envelope[i] = attack * np.abs(signal[i]) + (1 - attack) * envelope[i - 1]
+        # Compression process
+        if envelope[i] > threshold:
+            compressed_signal[i] = signal[i] / (1 + (envelope[i] - threshold) / ratio)
+    return compressed_signal
+
+# Low-pass filter effect (フィルター系)
+def low_pass_filter(input_signal, cutoff=1000, fs=44100):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = sig.butter(1, normal_cutoff, btype='low')
+    return sig.filtfilt(b, a, input_signal)
+
+# Harmony effect (ハーモニー系)
+def harmony(signal, semitone_shift=2, fs=44100):
+    t = np.arange(len(signal)) / fs
+    pitch_shift = np.sin(2 * np.pi * semitone_shift * t)
+    return signal * pitch_shift
+
+# Volume control effect (ボリューム系)
+def volume_control(signal, gain=1.0):
+    return signal * gain
+
+# Synthesized signal (シンセ系)
+def synthesize_signal(freq=440, duration=1, fs=44100):
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    return np.sin(2 * np.pi * freq * t)
+
+# Multi-effect chain (マルチエフェクタ)
+def multi_effects_chain(signal, fs=44100):
+    signal = distortion(signal)  # Apply distortion
+    signal = modulation(signal)  # Apply modulation
+    signal = reverb(signal)      # Apply reverb
+    signal = compression(signal) # Apply compression
+    signal = low_pass_filter(signal)  # Apply low-pass filter
+    signal = harmony(signal)     # Apply harmony
+    signal = volume_control(signal)  # Apply volume control
+    return signal
+
+# Example usage
+fs = 44100  # Sampling frequency
+freq = 440   # Frequency of the sine wave
+duration = 2  # Duration in seconds
+
+# Generate the base signal (sine wave)
+input_signal = synthesize_signal(freq=freq, duration=duration, fs=fs)
+
+# Apply the multi-effects chain
+output_signal = multi_effects_chain(input_signal, fs=fs)
+
+# Plotting all signals
+fig, axs = plt.subplots(4, 1, figsize=(10, 14))
+
+# Plot the original sine wave signal
+axs[0].plot(np.linspace(0, duration, int(fs * duration), endpoint=False), input_signal)
+axs[0].set_title("Original Sine Wave")
+axs[0].set_xlabel("Time [s]")
+axs[0].set_ylabel("Amplitude")
+axs[0].grid(True)
+
+# Plot the distorted signal
+axs[1].plot(np.linspace(0, duration, int(fs * duration), endpoint=False), distortion(input_signal))
+axs[1].set_title("Distorted Signal")
+axs[1].set_xlabel("Time [s]")
+axs[1].set_ylabel("Amplitude")
+axs[1].grid(True)
+
+# Plot the modulated signal
+axs[2].plot(np.linspace(0, duration, int(fs * duration), endpoint=False), modulation(input_signal))
+axs[2].set_title("Modulated Signal")
+axs[2].set_xlabel("Time [s]")
+axs[2].set_ylabel("Amplitude")
+axs[2].grid(True)
+
+# Plot the output signal after multi-effects chain
+axs[3].plot(np.linspace(0, duration, int(fs * duration), endpoint=False), output_signal)
+axs[3].set_title("Output Signal after Multi Effects Chain")
+axs[3].set_xlabel("Time [s]")
+axs[3].set_ylabel("Amplitude")
+axs[3].grid(True)
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
