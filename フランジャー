@@ -1,0 +1,42 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import lfilter
+
+# サンプリングレートと時間軸の設定
+fs = 44100  # サンプリング周波数 (Hz)
+t = np.linspace(0, 0.02, int(fs * 0.02), endpoint=False)  # 20msの時間軸
+
+# 入力信号（ドの音: 261.63 Hzのサイン波）
+freq = 261.63  # ドの音の周波数 (Hz)
+input_signal = np.sin(2 * np.pi * freq * t)
+
+# 変調 (AM変調)
+mod_freq = 5  # 変調周波数 (Hz)
+mod_signal = 0.5 * np.sin(2 * np.pi * mod_freq * t)  # 変調波
+modulated_signal = input_signal * (1 + mod_signal)  # 振幅変調
+
+# 遅延設定 (0.00001秒遅延)
+delay_samples = int(0.00001 * fs)  # 遅延サンプル数
+b = np.zeros(delay_samples + 1)  # フィルタ係数
+b[-1] = 1  # 遅延分のインパルス応答
+delayed_signal = lfilter(b, 1, modulated_signal)  # 遅延処理
+
+# フィードバック処理
+feedback_ratio = 0.7  # フィードバックの強さ
+feedback_signal = np.zeros_like(modulated_signal)
+for i in range(delay_samples, len(modulated_signal)):
+    feedback_signal[i] = modulated_signal[i] + feedback_ratio * delayed_signal[i - delay_samples]
+
+# 最終波形（入力とフィードバック信号を足し合わせ）
+final_signal = modulated_signal + feedback_signal
+
+# 波形のプロット
+plt.figure(figsize=(12, 6))
+plt.plot(t, final_signal, label="Final Signal (Input + Feedback)", color="b", alpha=0.7)
+plt.plot(t, input_signal, label="Original Input Signal", linestyle="dashed", color="r", alpha=0.5)
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.title("Plunger Effect Simulation with Delay and Feedback")
+plt.legend()
+plt.grid()
+plt.show()
